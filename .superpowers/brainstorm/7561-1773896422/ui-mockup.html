@@ -1,0 +1,49 @@
+<h2>Frontend Mockup</h2>
+<p class="subtitle">Chat interface with textbook context and image rendering</p>
+
+<div class="mockup">
+  <div class="mockup-header">USMLE Chatbot Preview</div>
+  <div class="mockup-body" style="background: #f9f9f9; padding: 20px; font-family: sans-serif;">
+    
+    <!-- User Message -->
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+      <div style="background: #007bff; color: white; padding: 10px 15px; border-radius: 15px 15px 0 15px; max-width: 70%;">
+        Tell me about the coagulation cascade and show me the diagram.
+      </div>
+    </div>
+
+    <!-- Bot Response -->
+    <div style="display: flex; justify-content: flex-start; margin-bottom: 20px;">
+      <div style="background: white; border: 1px solid #ddd; padding: 15px; border-radius: 15px 15px 15px 0; max-width: 85%; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <p style="margin-top: 0;">The coagulation cascade is divided into the <strong>intrinsic</strong> and <strong>extrinsic</strong> pathways, both of which lead to the activation of the common pathway...</p>
+        
+        <!-- Image Card -->
+        <div style="border: 1px solid #eee; border-radius: 8px; overflow: hidden; margin: 10px 0;">
+          <div style="background: #eee; height: 150px; display: flex; align-items: center; justify-content: center; color: #666;">
+            [ Textbook Image: Coagulation Cascade ]
+          </div>
+          <div style="padding: 10px; font-size: 12px; background: #fff;">
+            <strong>Source:</strong> Pathoma > Chapter 4 > Hemostasis
+          </div>
+        </div>
+
+        <p style="margin-bottom: 0;">Key factors include Factor Xa, which converts Prothrombin to Thrombin...</p>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div style="display: flex; gap: 10px; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 15px;">
+      <div class="mock-input" style="flex-grow: 1; height: 40px; border-radius: 20px; border: 1px solid #ccc; padding: 8px 15px; background: white; color: #999;">Ask a medical question...</div>
+      <div class="mock-button" style="width: 40px; height: 40px; border-radius: 20px; background: #007bff; display: flex; align-items: center; justify-content: center; color: white;">&rarr;</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Implementation Details</h3>
+  <ul>
+    <li><strong>Tailwind CSS:</strong> For rapid, consistent styling of the chat UI.</li>
+    <li><strong>Lucide Icons:</strong> For clean, professional iconography.</li>
+    <li><strong>Next/Image:</strong> To handle the 372MB image library with automatic optimization and lazy loading.</li>
+  </ul>
+</div>

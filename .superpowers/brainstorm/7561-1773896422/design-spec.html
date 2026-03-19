@@ -1,0 +1,60 @@
+<h2>Proposed Design: AI SDK Streaming</h2>
+<p class="subtitle">Modern RAG architecture with integrated image support</p>
+
+<div class="mockup">
+  <div class="mockup-header">System Architecture Diagram</div>
+  <div class="mockup-body">
+    <div style="display: flex; flex-direction: column; gap: 20px; align-items: center; padding: 20px;">
+      <div class="card" style="width: 300px; text-align: center; border: 2px solid var(--border);">
+        <strong>Frontend (Next.js App Router)</strong><br>
+        <small><code>useChat</code> hook, Markdown renderer, Image display</small>
+      </div>
+      <div style="font-size: 24px;">&darr;&uarr;</div>
+      <div class="card" style="width: 300px; text-align: center; border: 2px dashed var(--border);">
+        <strong>API Route (Route Handler)</strong><br>
+        <small>Pinecone Query &rarr; Context Injection &rarr; <code>streamText</code></small>
+      </div>
+      <div style="display: flex; gap: 40px; margin-top: 10px;">
+        <div style="text-align: center;">
+          <div class="placeholder" style="width: 100px; height: 60px;">Pinecone</div>
+          <small>Vector Retrieval</small>
+        </div>
+        <div style="text-align: center;">
+          <div class="placeholder" style="width: 100px; height: 60px;">OpenAI</div>
+          <small>LLM Completion</small>
+        </div>
+        <div style="text-align: center;">
+          <div class="placeholder" style="width: 100px; height: 60px;">Public Folder</div>
+          <small>Local Images</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Key Components</h3>
+  <ul>
+    <li><strong>Retriever:</strong> A utility function that mirrors your <code>embed_books.py</code> logic to vectorize user queries and fetch Top-K chunks from Pinecone.</li>
+    <li><strong>Image Server:</strong> We'll map the <code>image_ids</code> from Pinecone metadata to the files in <code>/public/extracted_images</code>.</li>
+    <li><strong>Context Injector:</strong> A prompt template that wraps retrieved textbook snippets into the system message.</li>
+  </ul>
+</div>
+
+<div class="pros-cons">
+  <div class="pros">
+    <h4>Why this works</h4>
+    <ul>
+      <li>Fast, responsive UI with real-time streaming.</li>
+      <li>Low latency retrieval from Pinecone.</li>
+      <li>Reuses your existing embedding model configuration.</li>
+    </ul>
+  </div>
+  <div class="cons">
+    <h4>Considerations</h4>
+    <ul>
+      <li>Need to ensure Next.js image optimization handles 2k+ local images efficiently.</li>
+      <li>Requires environment variables for Pinecone/OpenAI on Vercel.</li>
+    </ul>
+  </div>
+</div>

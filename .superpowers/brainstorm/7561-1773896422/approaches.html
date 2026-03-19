@@ -1,0 +1,45 @@
+<h2>Architecture Approaches</h2>
+<p class="subtitle">Choosing how the chatbot interacts with Pinecone and your images</p>
+
+<div class="options">
+  <div class="option" data-choice="simple-rag" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Simple API Route (Linear RAG)</h3>
+      <p>Frontend sends prompt &rarr; API Route queries Pinecone &rarr; API Route calls OpenAI &rarr; Response with images returned.</p>
+      <ul>
+        <li><strong>Pros:</strong> Very simple to implement, predictable.</li>
+        <li><strong>Cons:</strong> No streaming by default, harder to handle complex multi-turn logic.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="option" data-choice="ai-sdk-streaming" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>AI SDK Streaming (Recommended)</h3>
+      <p>Uses <code>streamText</code> and <code>useChat</code>. LLM streams the response. We inject context from Pinecone into the prompt.</p>
+      <ul>
+        <li><strong>Pros:</strong> Modern "ChatGPT" feel, built-in streaming, easy to add tool-calling later.</li>
+        <li><strong>Cons:</strong> Requires slightly more boilerplate for context injection.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="option" data-choice="tool-calling" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Agentic Tool Calling</h3>
+      <p>LLM decides when to "search_textbooks". It explicitly asks for Pinecone data only when needed.</p>
+      <ul>
+        <li><strong>Pros:</strong> Most flexible, can handle "Tell me about X" and "Find an image of Y" differently.</li>
+        <li><strong>Cons:</strong> Slower (extra round trip), potentially higher token usage.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Image Strategy</h3>
+  <p>For all options, we'll serve the <strong>Git LFS images</strong> from a dedicated <code>/public/images</code> folder or an external S3/Vercel Blob bucket so the chatbot can display them via Markdown or custom components.</p>
+</div>
