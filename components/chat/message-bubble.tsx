@@ -86,11 +86,12 @@ function VoiceButton({ text }: { text: string }) {
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user';
 
-  // Extract context status from message data
-  const data = message.data as any[] | undefined;
-  const contextStatus = data?.find((d: any) => d.context_found !== undefined);
+  // Extract metadata from message annotations (set via data.appendMessageAnnotation on server)
+  const annotations = message.annotations as any[] | undefined;
+  const contextStatus = annotations?.find((a: any) => a.context_found !== undefined);
   const contextFound = contextStatus ? contextStatus.context_found : true;
   const isContextMissing = !isUser && contextFound === false;
+  const imageIds: string[] = contextStatus?.images ?? [];
 
   return (
     <div
@@ -129,7 +130,25 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           ) : (
             <>
               <ImageRenderer content={message.content} />
-              {/* Only show voice button once message has fully streamed (>20 chars) */}
+              {imageIds.length > 0 && (
+                <div className="mt-4 flex flex-col gap-3">
+                  {imageIds.map((imageId) => (
+                    <div
+                      key={imageId}
+                      className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
+                    >
+                      <div className="relative w-full max-w-2xl mx-auto">
+                        <img
+                          src={`/extracted_images/images/${imageId}.png`}
+                          alt={`Textbook figure`}
+                          className="w-full h-auto object-contain"
+                          loading="lazy"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
               {message.content.length > 20 && (
                 <VoiceButton text={message.content} />
               )}

@@ -1,6 +1,98 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import { getEmbedding } from './openai';
 
+// ─── Chapter maps ─────────────────────────────────────────────────────────────
+// Maps ordinal/cardinal chapter numbers → exact chapter title substring used in embeddings.
+// Keeps structural queries ("chapter 1", "first chapter") resolvable via semantic search.
+
+const PATHOMA_CHAPTERS: Record<number, string> = {
+  1:  'Growth Adaptations, Cellular Injury, and Cell Death',
+  2:  'Inflammation, Inflammatory Disorders, and Wound Healing',
+  3:  'Principles of Neoplasia',
+  4:  'Hemostasis and Related Disorders',
+  5:  'Red Blood Cell Disorders',
+  6:  'White Blood Cell Disorders',
+  7:  'Vascular Pathology',
+  8:  'Cardiac Pathology',
+  9:  'Respiratory Tract Pathology',
+  10: 'Gastrointestinal Pathology',
+  11: 'Exocrine Pancreas, Gallbladder, and Liver Pathology',
+  12: 'Kidney and Urinary Tract Pathology',
+  13: 'Female Genital System and Gestational Pathology',
+  14: 'Male Genital System Pathology',
+  15: 'Endocrine Pathology',
+  16: 'Breast Pathology',
+  17: 'Central Nervous System Pathology',
+  18: 'Musculoskeletal Pathology',
+  19: 'Skin Pathology',
+};
+
+const FIRST_AID_CHAPTERS: Record<number, string> = {
+  1:  'Section I Guide',
+  2:  'Biochemistry',
+  3:  'Immunology',
+  4:  'Microbiology',
+  5:  'Pathology',
+  6:  'Pharmacology',
+  7:  'Public Health Sciences',
+  8:  'Cardiovascular',
+  9:  'Endocrine',
+  10: 'Gastrointestinal',
+  11: 'Hematology and Oncology',
+  12: 'Musculoskeletal',
+  13: 'Neurology',
+  14: 'Psychiatry',
+  15: 'Renal',
+  16: 'Reproductive',
+  17: 'Respiratory',
+};
+
+const ORDINALS: Record<string, number> = {
+  first: 1, second: 2, third: 3, fourth: 4, fifth: 5,
+  sixth: 6, seventh: 7, eighth: 8, ninth: 9, tenth: 10,
+  eleventh: 11, twelfth: 12, thirteenth: 13, fourteenth: 14,
+  fifteenth: 15, sixteenth: 16, seventeenth: 17, eighteenth: 18, nineteenth: 19,
+};
+
+/**
+ * Detects chapter references in a query and appends the full chapter title
+ * so vector search can match on content rather than structural terms.
+ *
+ * Examples:
+ *   "chapter 1 of pathoma"    → appends "Growth Adaptations, Cellular Injury, and Cell Death"
+ *   "first chapter pathoma"   → same
+ *   "pathoma chapter 3"       → appends "Principles of Neoplasia"
+ *   "first aid chapter 8"     → appends "Cardiovascular"
+ */
+export function expandChapterQuery(query: string): string {
+  const lower = query.toLowerCase();
+
+  // Determine which book is referenced (default to Pathoma if neither or both mentioned)
+  const mentionsFirstAid = /first\s+aid/.test(lower);
+  const mentionsPathoma = /pathoma/.test(lower);
+  const chapterMap = mentionsFirstAid && !mentionsPathoma
+    ? FIRST_AID_CHAPTERS
+    : PATHOMA_CHAPTERS;
+
+  // Match "chapter <number>" or "<ordinal> chapter"
+  const numericMatch = lower.match(/chapter\s+(\d+)/);
+  const ordinalMatch = lower.match(
+    new RegExp(`(${Object.keys(ORDINALS).join('|')})\\s+chapter`)
+  );
+
+  const chapterNum = numericMatch
+    ? parseInt(numericMatch[1], 10)
+    : ordinalMatch
+      ? ORDINALS[ordinalMatch[1]]
+      : null;
+
+  if (chapterNum && chapterMap[chapterNum]) {
+    return `${query} ${chapterMap[chapterNum]}`;
+  }
+
+  return query;
+}
+
 let pc: Pinecone | null = null;
 
 function getPineconeClient() {
@@ -25,53 +117,116 @@ export interface ChunkMetadata {
   section: string;
   subsection: string;
   image_ids: string[];
+  /** Cosine similarity score (0–1). Present when returnScores=true. */
+  score?: number;
   [key: string]: any;
+}
+
+// Docs: scores below this threshold are typically noise for cosine similarity RAG.
+// See: https://docs.pinecone.io/guides/data/query-data
+const MIN_SCORE_THRESHOLD = 0.3;
+const MIN_IMAGE_SCORE_THRESHOLD = 0.35;
+
+export interface ImageResult {
+  image_id: string;
+  filename: string;
+  source_book: string;
+  page_number: number;
+  caption: string;
+  score?: number;
+}
+
+/**
+ * Retrieves relevant images for a given query by searching the Pinecone `images` namespace.
+ * Images are embedded by their caption/description (see embed_images.py).
+ */
+export async function getImages(
+  query: string,
+  topK = 2,
+): Promise<ImageResult[]> {
+  try {
+    const client = getPineconeClient();
+    const indexName = process.env.PINECONE_INDEX_NAME;
+    if (!indexName) throw new Error('PINECONE_INDEX_NAME is not defined');
+
+    const queryEmbedding = await getEmbedding(query);
+    const response = await client.index(indexName).namespace('images').query({
+      vector: queryEmbedding,
+      topK,
+      includeMetadata: true,
+    });
+
+    return response.matches
+      .filter(m => (m.score ?? 0) >= MIN_IMAGE_SCORE_THRESHOLD)
+      .map(m => ({
+        ...(m.metadata as unknown as ImageResult),
+        score: m.score,
+      }));
+  } catch (error) {
+    console.error('Error retrieving images from Pinecone:', error);
+    return [];
+  }
 }
 
 /**
  * Retrieves relevant context for a given query by searching the Pinecone vector database.
- * 
- * @param query The user's query string.
- * @param namespaces The Pinecone namespaces to search in (default: ['first-aid-2023', 'pathoma-2021']).
- * @returns An array of metadata for the matching chunks, sorted by score.
+ *
+ * @param query      The user's query string.
+ * @param namespaces Pinecone namespaces to search (default: both books).
+ * @param returnScores  When true, includes `score` field on each result (for evals/debugging).
  */
-export async function getContext(query: string, namespaces: string[] = ['first-aid-2023', 'pathoma-2021']): Promise<ChunkMetadata[]> {
+export async function getContext(
+  query: string,
+  namespaces: string[] = ['first-aid-2023', 'pathoma-2021'],
+  returnScores = false,
+): Promise<ChunkMetadata[]> {
   try {
     const client = getPineconeClient();
     const indexName = process.env.PINECONE_INDEX_NAME;
-    
+
     if (!indexName) {
       throw new Error('PINECONE_INDEX_NAME is not defined');
     }
 
-    // 1. Vectorize the user's query
-    const queryEmbedding = await getEmbedding(query);
+    // 1. Expand structural queries ("chapter 1") to include the actual chapter title
+    const expandedQuery = expandChapterQuery(query);
 
-    // 2. Query the Pinecone index for each namespace in parallel
+    // 2. Vectorize the (possibly expanded) query
+    const queryEmbedding = await getEmbedding(expandedQuery);
+
+    // 3. Query each namespace in parallel — fetch topK=10 per namespace so the
+    //    score-threshold filter + global top-7 slice have enough candidates.
     const index = client.index(indexName);
-    
+
     const queryPromises = namespaces.map(async (ns) => {
       const response = await index.namespace(ns).query({
         vector: queryEmbedding,
-        topK: 5,
+        topK: 10,
         includeMetadata: true,
       });
       return response.matches.map(match => ({
-        ...match.metadata as ChunkMetadata,
-        score: match.score || 0
+        ...(match.metadata as ChunkMetadata),
+        score: match.score ?? 0,
       }));
     });
 
     const results = await Promise.all(queryPromises);
 
-    // 3. Flatten, sort by score, and take top 7 total
-    return results
+    // 4. Flatten, apply score threshold (client-side per docs), sort, take top 7
+    const filtered = results
       .flat()
-      .sort((a, b) => (b as any).score - (a as any).score)
-      .slice(0, 7)
-      .map(({ score, ...metadata }) => metadata as ChunkMetadata);
+      .filter(r => r.score >= MIN_SCORE_THRESHOLD)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 7);
+
+    if (returnScores) {
+      return filtered;
+    }
+
+    // Strip scores from production responses to keep the API surface clean
+    return filtered.map(({ score, ...metadata }) => metadata as ChunkMetadata);
   } catch (error) {
     console.error('Error retrieving context from Pinecone:', error);
-    return []; // Return empty array instead of throwing to prevent crashing the chat
+    return [];
   }
 }
