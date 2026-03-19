@@ -2,6 +2,7 @@
 
 import { Menu, Bot, SquarePen } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { WhatsAppSubscribe } from "@/components/whatsapp/whatsapp-subscribe";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -27,6 +28,7 @@ export function Header({ onMenuClick, onNewChat }: HeaderProps) {
         </div>
         
         <div className="flex items-center gap-1">
+          <WhatsAppSubscribe />
           <NotificationBell />
           <button
             onClick={onNewChat}
