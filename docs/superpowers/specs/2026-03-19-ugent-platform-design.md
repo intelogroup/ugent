@@ -18,7 +18,7 @@ Transform UGent MedBot from a stateless USMLE chat app into a persistent multi-p
 
 - **Vercel Pro required before Phase 1**: existing `app/api/chat/route.ts` already has `maxDuration = 30`, which exceeds Hobby plan's 10s serverless limit. Upgrade before any deployment.
 - **Convex deployments**: use separate dev/prod deployments. `npx convex dev` targets dev; `npx convex deploy` targets prod. Never run test billing events against production.
-- **`@convex-dev/auth` version**: pin to a specific minor version (currently `0.0.x`). It is still on `labs.convex.dev` (experimental). On a breaking change, fallback is `get-convex/better-auth` or Clerk + Convex JWT verification.
+- **Auth package: `@convex-dev/better-auth`** — chosen over `@convex-dev/auth` and Clerk. Maintained by Convex team, open source, Convex-native JWT, `sendOTP` callback for WhatsApp OTP, webhook user lookup is a plain Convex query. Pin to a specific minor version; expect breaking changes between minor versions with migration guides.
 
 ---
 
@@ -121,11 +121,10 @@ Index: `by_thread` on `["threadId", "createdAt"]` — required to avoid full tab
 
 **Goal**: Users can sign up, log in, and have chat history persist across sessions.
 
-### Auth (Convex Auth — Email OTP)
-- Package: `@convex-dev/auth` — **pin to specific minor version** at install time
-- Provider: `Email` using Resend (already in deps) as OTP transport
-- Known limitation: `convexAuthNextjsMiddleware` has an active bug (#271) where `isAuthenticated()` returns `false` in middleware for OAuth flows. Email OTP is unaffected. Do not add OAuth providers until this is resolved.
-- `convexAuthNextjsMiddleware` in `middleware.ts` protects all routes except `/login`
+### Auth (`@convex-dev/better-auth` — Email OTP)
+- Package: `@convex-dev/better-auth` (pin minor version), uses Better Auth `emailOTP` plugin
+- Email delivery: implement `sendVerificationOTP({ email, otp })` → call Resend directly (already in deps)
+- Middleware: `convexBetterAuthNextJs` helper protects routes in `middleware.ts`
 - Login page: email input → OTP code input → redirect to `/`
 
 ### Chat persistence
@@ -256,9 +255,9 @@ Click Research on web → close browser → receive result on Telegram ~30 secon
 
 ### Flow
 1. Login page: "Sign in with WhatsApp" → phone number input
-2. **Send-side rate limit FIRST**: check Upstash Redis (or Convex rate-limiter component) — max 3 OTP sends per phone number per 10 minutes. Return error without calling WhatsApp API if exceeded.
-3. Convex Auth `Phone` provider → custom send function → calls WhatsApp Business API with OTP
-4. User enters 6-digit code → Convex Auth verifies (built-in: 10 failed attempts/hour lockout)
+2. **Send-side rate limit FIRST**: check Upstash Redis (or `@convex-dev/rate-limiter`) — max 3 OTP sends per phone number per 10 minutes. Return error without calling WhatsApp API if exceeded.
+3. Better Auth `phoneNumber` plugin → `sendOTP({ phoneNumber, code })` callback → calls WhatsApp Business API
+4. User enters 6-digit code → Better Auth verifies (built-in lockout after N failed attempts)
 5. If phone matches existing `whatsappPhone` (unique index lookup) → link to that account
 6. If no match → create new WhatsApp-only account (`email: null`)
 7. **Duplicate account handling**: post-login, check if a separate email account exists with matching data → prompt "We found an account registered with email. Would you like to merge?"
@@ -297,7 +296,7 @@ All of these must be verified before each phase ships:
 | Decision | Choice | Reason |
 |---|---|---|
 | DB + backend | Convex | Real-time, background jobs, auth — all built in |
-| Auth | `@convex-dev/auth` (pinned) | Email OTP via Resend; fallback: `get-convex/better-auth` |
+| Auth | `@convex-dev/better-auth` (pinned) | `sendOTP` callback for WA OTP; webhook user lookup = plain Convex query; free/OSS |
 | Background jobs | Convex Scheduled Actions | No Inngest, no external queue |
 | Cron fan-out | Convex Workpool component | Hard 1K limit on direct scheduler calls; Workpool handles batching |
 | Real-time | Convex subscriptions | No Pusher, no Ably |
@@ -311,7 +310,7 @@ All of these must be verified before each phase ships:
 
 ## What Is NOT in Scope
 
-- Google / GitHub OAuth (avoid until Convex Auth middleware bug #271 is resolved)
+- Google / GitHub OAuth (can add later via Better Auth `genericOAuth` plugin — no known blockers)
 - Mobile app
 - Admin dashboard
 - Multi-language support
