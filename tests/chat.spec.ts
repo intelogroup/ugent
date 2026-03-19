@@ -25,3 +25,15 @@ test('can type a message', async ({ page }) => {
   // Since it's medical, it should mention Nephritic syndrome in its response.
   await expect(page.locator('.bg-transparent.text-gray-800').first()).toBeVisible({ timeout: 15000 });
 });
+
+test('voice button appears on bot message', async ({ page }) => {
+  await page.goto('http://localhost:3000');
+  const input = page.getByRole('textbox');
+  await input.fill('Hi');
+  const submitButton = page.locator('button[type="submit"]');
+  await submitButton.click();
+
+  // Wait for a bot response long enough to show voice button (>20 chars)
+  const voiceButton = page.locator('button[title="Read aloud"]');
+  await expect(voiceButton).toBeVisible({ timeout: 20000 });
+});
