@@ -2,15 +2,18 @@
 > ugent@0.1.0 dev
 > next dev
 
-   ▲ Next.js 15.1.0
+   ▲ Next.js 15.5.13
    - Local:        http://localhost:3000
    - Network:      http://10.0.0.82:3000
    - Environments: .env.local, .env
 
  ✓ Starting...
- ✓ Ready in 866ms
+ ✓ Ready in 1004ms
  ○ Compiling / ...
- ✓ Compiled / in 1048ms (1572 modules)
- GET / 200 in 1222ms
- ✓ Compiled in 67ms (763 modules)
- GET / 200 in 34ms
+ ✓ Compiled / in 911ms (1536 modules)
+ GET / 200 in 1176ms
+ ✓ Compiled in 72ms (704 modules)
+ ✓ Compiled /api/chat in 498ms (1859 modules)
+(node:17877) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ POST /api/chat 200 in 3903ms
