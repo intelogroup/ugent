@@ -54,7 +54,7 @@ def extract_images(pdf_path, output_root="extracted_images"):
         #         if xref == 0: continue
         #         img_rect = fitz.Rect(img["bbox"])
         
-        for img_info in page.get_image_info():
+        for img_info in page.get_image_info(xrefs=True):
             xref = img_info["xref"]
             if xref == 0: continue
             
