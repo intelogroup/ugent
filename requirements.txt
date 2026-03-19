@@ -2,3 +2,5 @@ pymupdf
 pinecone
 python-dotenv
 pytest
+openai
+tqdm
