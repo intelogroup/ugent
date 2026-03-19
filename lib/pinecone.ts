@@ -15,8 +15,6 @@ function getPineconeClient() {
   return pc;
 }
 
-const indexName = process.env.PINECONE_INDEX_NAME!;
-
 /**
  * Metadata structure for chunks stored in Pinecone.
  */
@@ -40,6 +38,12 @@ export interface ChunkMetadata {
 export async function getContext(query: string, namespaces: string[] = ['first-aid-2023', 'pathoma-2021']): Promise<ChunkMetadata[]> {
   try {
     const client = getPineconeClient();
+    const indexName = process.env.PINECONE_INDEX_NAME;
+    
+    if (!indexName) {
+      throw new Error('PINECONE_INDEX_NAME is not defined');
+    }
+
     // 1. Vectorize the user's query
     const queryEmbedding = await getEmbedding(query);
 

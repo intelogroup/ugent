@@ -1,6 +1,7 @@
 "use client";
 
 import { Menu, Bot, SquarePen } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -25,13 +26,16 @@ export function Header({ onMenuClick, onNewChat }: HeaderProps) {
           </div>
         </div>
         
-        <button
-          onClick={onNewChat}
-          className="p-2 hover:bg-accent rounded-lg transition-colors"
-          aria-label="New Chat"
-        >
-          <SquarePen className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <button
+            onClick={onNewChat}
+            className="p-2 hover:bg-accent rounded-lg transition-colors"
+            aria-label="New Chat"
+          >
+            <SquarePen className="h-5 w-5" />
+          </button>
+        </div>
       </div>
     </header>
   );

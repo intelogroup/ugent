@@ -10,16 +10,23 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [chatKey, setChatKey] = useState(0);
 
-  const toggleDrawer = () => setIsDrawerOpen(!isDrawerOpen);
+  const toggleDrawer = () => setIsDrawerOpen((v) => !v);
   const closeDrawer = () => setIsDrawerOpen(false);
+  const resetChat = () => {
+    closeDrawer();
+    setChatKey((k) => k + 1);
+  };
 
   return (
     <div className="flex flex-col h-[100dvh] overflow-hidden bg-background">
-      <Header onMenuClick={toggleDrawer} onNewChat={() => window.location.reload()} />
-      <Drawer isOpen={isDrawerOpen} onClose={closeDrawer} />
+      <Header onMenuClick={toggleDrawer} onNewChat={resetChat} />
+      <Drawer isOpen={isDrawerOpen} onClose={closeDrawer} onNewChat={resetChat} />
       <main className="flex-1 overflow-hidden relative">
-        {children}
+        <div key={chatKey} className="h-full">
+          {children}
+        </div>
       </main>
     </div>
   );

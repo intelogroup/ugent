@@ -1,14 +1,15 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MessageSquare, Settings, Moon, Sun, Monitor } from "lucide-react";
+import { X, MessageSquare, Settings, Monitor, SquarePen } from "lucide-react";
 
 interface DrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  onNewChat: () => void;
 }
 
-export function Drawer({ isOpen, onClose }: DrawerProps) {
+export function Drawer({ isOpen, onClose, onNewChat }: DrawerProps) {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -19,7 +20,7 @@ export function Drawer({ isOpen, onClose }: DrawerProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm sm:hidden"
+            className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm"
           />
 
           {/* Drawer */}
@@ -35,44 +36,49 @@ export function Drawer({ isOpen, onClose }: DrawerProps) {
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-accent rounded-lg transition-colors"
+                aria-label="Close menu"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
-              {/* Chat History Section */}
+              {/* New Chat */}
+              <button
+                onClick={onNewChat}
+                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg transition-colors"
+              >
+                <SquarePen className="h-4 w-4" />
+                <span>New Chat</span>
+              </button>
+
+              {/* Chat History */}
               <section>
                 <h3 className="px-2 mb-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">
                   Chat History
                 </h3>
-                <div className="space-y-1">
-                  {[1, 2, 3].map((i) => (
-                    <button
-                      key={i}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-foreground hover:bg-accent rounded-lg transition-colors group text-left"
-                    >
-                      <MessageSquare className="h-4 w-4 text-muted-foreground group-hover:text-blue-500" />
-                      <span className="truncate">Previous Medical Query {i}</span>
-                    </button>
-                  ))}
+                <div className="flex flex-col items-center gap-2 py-6 text-muted-foreground">
+                  <MessageSquare className="h-8 w-8 opacity-30" />
+                  <p className="text-xs text-center opacity-50">
+                    No saved chats yet
+                  </p>
                 </div>
               </section>
 
-              {/* Settings Section */}
+              {/* Settings */}
               <section>
                 <h3 className="px-2 mb-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">
                   Settings
                 </h3>
                 <div className="space-y-1">
-                  <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors">
-                    <Monitor className="h-4 w-4" />
+                  <div className="w-full flex items-center gap-3 px-3 py-2 text-sm text-foreground rounded-lg">
+                    <Monitor className="h-4 w-4 text-muted-foreground" />
                     <span>Model: GPT-4o</span>
-                  </button>
-                  <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-foreground hover:bg-accent rounded-lg transition-colors">
-                    <Sun className="h-4 w-4" />
-                    <span>Theme: Light</span>
-                  </button>
+                  </div>
+                  <div className="w-full flex items-center gap-3 px-3 py-2 text-sm text-foreground rounded-lg">
+                    <Settings className="h-4 w-4 text-muted-foreground" />
+                    <span>Knowledge: First Aid + Pathoma</span>
+                  </div>
                 </div>
               </section>
             </div>
