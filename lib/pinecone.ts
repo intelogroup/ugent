@@ -1,9 +1,19 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import { getEmbedding } from './openai';
 
-const pc = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY!,
-});
+let pc: Pinecone | null = null;
+
+function getPineconeClient() {
+  if (!pc) {
+    if (!process.env.PINECONE_API_KEY) {
+      throw new Error('PINECONE_API_KEY is not defined');
+    }
+    pc = new Pinecone({
+      apiKey: process.env.PINECONE_API_KEY,
+    });
+  }
+  return pc;
+}
 
 const indexName = process.env.PINECONE_INDEX_NAME!;
 
@@ -24,28 +34,40 @@ export interface ChunkMetadata {
  * Retrieves relevant context for a given query by searching the Pinecone vector database.
  * 
  * @param query The user's query string.
- * @param namespace The Pinecone namespace to search in (default: 'first-aid-2023').
- * @returns An array of metadata for the Top-5 matching chunks.
+ * @param namespaces The Pinecone namespaces to search in (default: ['first-aid-2023', 'pathoma-2021']).
+ * @returns An array of metadata for the matching chunks, sorted by score.
  */
-export async function getContext(query: string, namespace: string = 'first-aid-2023'): Promise<ChunkMetadata[]> {
+export async function getContext(query: string, namespaces: string[] = ['first-aid-2023', 'pathoma-2021']): Promise<ChunkMetadata[]> {
   try {
+    const client = getPineconeClient();
     // 1. Vectorize the user's query
     const queryEmbedding = await getEmbedding(query);
 
-    // 2. Query the Pinecone index
-    const index = pc.index(indexName);
-    const queryResponse = await index.namespace(namespace).query({
-      vector: queryEmbedding,
-      topK: 5,
-      includeMetadata: true,
+    // 2. Query the Pinecone index for each namespace in parallel
+    const index = client.index(indexName);
+    
+    const queryPromises = namespaces.map(async (ns) => {
+      const response = await index.namespace(ns).query({
+        vector: queryEmbedding,
+        topK: 5,
+        includeMetadata: true,
+      });
+      return response.matches.map(match => ({
+        ...match.metadata as ChunkMetadata,
+        score: match.score || 0
+      }));
     });
 
-    // 3. Extract and return the metadata
-    return queryResponse.matches
-      .map((match) => match.metadata as ChunkMetadata)
-      .filter((metadata) => !!metadata);
+    const results = await Promise.all(queryPromises);
+
+    // 3. Flatten, sort by score, and take top 7 total
+    return results
+      .flat()
+      .sort((a, b) => (b as any).score - (a as any).score)
+      .slice(0, 7)
+      .map(({ score, ...metadata }) => metadata as ChunkMetadata);
   } catch (error) {
     console.error('Error retrieving context from Pinecone:', error);
-    throw error;
+    return []; // Return empty array instead of throwing to prevent crashing the chat
   }
 }

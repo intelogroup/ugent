@@ -1,1 +1,16 @@
-bash: scripts/start-server.sh: No such file or directory
+
+> ugent@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.1.0
+   - Local:        http://localhost:3000
+   - Network:      http://10.0.0.82:3000
+   - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Ready in 866ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1048ms (1572 modules)
+ GET / 200 in 1222ms
+ ✓ Compiled in 67ms (763 modules)
+ GET / 200 in 34ms
