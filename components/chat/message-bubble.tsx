@@ -1,79 +1,65 @@
 'use client';
 
 import { Message } from 'ai';
-import { Bot, AlertCircle, Volume2, VolumeX, Loader2 } from 'lucide-react';
+import { Bot, AlertCircle, Volume2, VolumeX } from 'lucide-react';
 import { useState, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import ImageRenderer from '../image-renderer';
+import { cleanForSpeech } from '@/lib/clean-for-speech';
 
 interface MessageBubbleProps {
   message: Message;
 }
 
-type PlayState = 'idle' | 'loading' | 'playing';
+type PlayState = 'idle' | 'speaking';
 
 function VoiceButton({ text }: { text: string }) {
   const [state, setState] = useState<PlayState>('idle');
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  const handleVoice = useCallback(async () => {
-    // Stop if already playing
-    if (state === 'playing') {
-      audioRef.current?.pause();
-      audioRef.current = null;
+  const handleVoice = useCallback(() => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    if (state === 'speaking') {
+      window.speechSynthesis.cancel();
       setState('idle');
       return;
     }
 
-    setState('loading');
-    try {
-      const res = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      });
+    const cleaned = cleanForSpeech(text);
+    if (!cleaned) return;
 
-      if (!res.ok) throw new Error('TTS failed');
+    const utterance = new SpeechSynthesisUtterance(cleaned);
+    utteranceRef.current = utterance;
 
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audioRef.current = audio;
-
-      audio.onended = () => {
-        setState('idle');
-        URL.revokeObjectURL(url);
-        audioRef.current = null;
-      };
-      audio.onerror = () => {
-        setState('idle');
-        URL.revokeObjectURL(url);
-        audioRef.current = null;
-      };
-
-      await audio.play();
-      setState('playing');
-    } catch {
+    utterance.onstart = () => setState('speaking');
+    utterance.onend = () => {
       setState('idle');
-    }
+      utteranceRef.current = null;
+    };
+    utterance.onerror = () => {
+      setState('idle');
+      utteranceRef.current = null;
+    };
+
+    window.speechSynthesis.speak(utterance);
   }, [state, text]);
+
+  // Don't render if browser doesn't support Web Speech
+  if (typeof window !== 'undefined' && !window.speechSynthesis) return null;
 
   return (
     <button
       onClick={handleVoice}
-      title={state === 'playing' ? 'Stop' : 'Read aloud'}
+      title={state === 'speaking' ? 'Stop' : 'Read aloud'}
       className={cn(
         'mt-2 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
-        state === 'playing'
+        state === 'speaking'
           ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300'
           : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800',
-        state === 'loading' && 'opacity-60 cursor-wait'
       )}
-      disabled={state === 'loading'}
     >
-      {state === 'loading' ? (
-        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-      ) : state === 'playing' ? (
+      {state === 'speaking' ? (
         <>
           <VolumeX className="w-3.5 h-3.5" />
           <span>Stop</span>
