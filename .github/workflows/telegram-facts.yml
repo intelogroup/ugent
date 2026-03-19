@@ -1,0 +1,17 @@
+name: Telegram Facts (every 2 hours)
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'
+  workflow_dispatch: # allow manual trigger from GitHub UI
+
+jobs:
+  send-facts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Telegram facts cron
+        run: |
+          curl -sf -X GET \
+            https://ugent2.vercel.app/api/cron/telegram-facts \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            | jq .
