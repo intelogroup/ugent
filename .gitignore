@@ -1,6 +1,5 @@
 .env
 __pycache__/
 *.pyc
-extracted_images/images/
 *.pdf
 .DS_Store
