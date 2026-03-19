@@ -1,0 +1,53 @@
+<h2>Architecture: Medical Textbook RAG</h2>
+<p class="subtitle">Fast, Accurate, and Multimodal Retrieval</p>
+
+<div class="section">
+  <h3>1. Data Processing Pipeline</h3>
+  <div class="mockup">
+    <div class="mockup-body">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px;">
+        <div class="card" style="width: 200px;">
+          <h4>Text Chunking</h4>
+          <p>Recursive character splitting with overlap. Context-aware headers.</p>
+        </div>
+        <div style="font-size: 24px;">&rarr;</div>
+        <div class="card" style="width: 200px;">
+          <h4>Metadata Tagging</h4>
+          <p>Book, Chapter, Page, Topic, Section Headers.</p>
+        </div>
+        <div style="font-size: 24px;">&rarr;</div>
+        <div class="card" style="width: 200px;">
+          <h4>Pinecone Index</h4>
+          <p>Serverless Index (text-embedding-3-large, 3072 dims).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>2. Retrieval Strategy</h3>
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>Semantic Search</h4>
+      <ul>
+        <li>Uses OpenAI Large embeddings</li>
+        <li>Captures conceptual meaning</li>
+        <li>Excellent for natural language queries</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>Keyword/Metadata Filters</h4>
+      <ul>
+        <li>Ensures specific book/chapter focus</li>
+        <li>Handles medical jargon/abbreviations</li>
+        <li>Strict filtering for accuracy</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>3. Key Optimization: Topic-Aware Context</h3>
+  <p>Instead of just text fragments, we inject the <strong>Breadcrumb Metadata</strong> (e.g., <i>Biochemistry > Molecular > Nucleotides</i>) into the embedding content to ensure the AI "understands" the context of every snippet.</p>
+</div>

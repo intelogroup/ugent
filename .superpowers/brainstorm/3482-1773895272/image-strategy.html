@@ -1,0 +1,30 @@
+<h2>Image Integration Strategy</h2>
+<p class="subtitle">How should we index the visuals from First Aid and Pathoma?</p>
+
+<div class="options">
+  <div class="option" data-choice="text-linked" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Text-Linked (Simple & Fast)</h3>
+      <p>Index the captions and surrounding text. When you search for "Mitral Stenosis", the system finds the text and pulls up the associated diagram/echo image based on proximity.</p>
+      <ul>
+        <li>Uses existing text-embedding-3-large pipeline</li>
+        <li>Reliable and easy to implement</li>
+        <li>Lower cost</li>
+      </ul>
+    </div>
+  </div>
+  
+  <div class="option" data-choice="multimodal" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Multimodal (Advanced & Accurate)</h3>
+      <p>Use a Vision-enabled model (like CLIP or GPT-4o) to "describe" every image into text, or use multimodal embeddings. You can search for visual patterns even if the caption is vague.</p>
+      <ul>
+        <li>Can find images based on visual content</li>
+        <li>Requires an extra processing step per image</li>
+        <li>Highest search accuracy for diagrams/slides</li>
+      </ul>
+    </div>
+  </div>
+</div>

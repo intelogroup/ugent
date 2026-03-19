@@ -51,58 +51,58 @@ git commit -m "chore: update dependencies for embedding and openai"
 - Create: `chunker.py`
 - Test: `test_chunker.py`
 
-- [ ] **Step 1: Write failing test for chunking with breadcrumbs**
-Create `test_chunker.py`.
+- [ ] **Step 1: Write failing test for chunking with breadcrumbs and images**
+Create `test_chunker.py`. Include a test for image tag detection.
 
 ```python
 from chunker import chunk_markdown
+from image_mapper import ImageMapper
 
-def test_chunk_markdown_with_breadcrumbs():
-    content = "# Ch1\n## Sec1\nSome text here."
-    book_name = "First Aid"
-    chunks = chunk_markdown(content, book_name)
+def test_chunk_markdown_with_images(tmp_path):
+    # Setup mock ImageMapper
+    metadata_file = tmp_path / "metadata.json"
+    metadata_file.write_text('[{"filename": "img1.png", "image_id": "hash123"}]')
+    mapper = ImageMapper(str(metadata_file))
+    
+    content = "# Ch1\n![alt](img1.png)\nSome text."
+    chunks = chunk_markdown(content, "First Aid", image_mapper=mapper)
+    
     assert len(chunks) > 0
-    assert "[Book: First Aid] > [Chapter: Ch1] > [Section: Sec1]" in chunks[0]
+    # Verify metadata (this implies chunk_markdown returns objects/dicts)
+    assert chunks[0]["metadata"]["image_ids"] == ["hash123"]
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 Run: `pytest test_chunker.py`
-Expected: FAIL with `ModuleNotFoundError`.
+Expected: FAIL.
 
-- [ ] **Step 3: Implement chunk_markdown in chunker.py**
-Implement logic to parse headers and prepend breadcrumbs.
+- [ ] **Step 3: Implement robust chunk_markdown in chunker.py**
+Handle headers, breadcrumbs, and image tag extraction.
 
 ```python
 import re
 
-def chunk_markdown(content, book_name, max_tokens=512):
-    # Minimal implementation for breadcrumb parsing
+def chunk_markdown(content, book_name, image_mapper=None, max_tokens=512):
     lines = content.split('\n')
     chunks = []
     current_headers = {1: None, 2: None, 3: None}
     
-    current_chunk_text = ""
     for line in lines:
-        header_match = re.match(r'^(#+)\s+(.*)', line)
+        # Header detection (including SECTION markers)
+        header_match = re.match(r'^(#+)\s+(.*)|^SECTION\s+(.*)', line)
         if header_match:
-            level = len(header_match.group(1))
-            name = header_match.group(2)
-            if level in current_headers:
-                current_headers[level] = name
-                # Clear sub-headers
-                for i in range(level + 1, 4):
-                    current_headers[i] = None
-        
-        # Build breadcrumb
-        breadcrumb_parts = [f"[Book: {book_name}]"]
-        if current_headers[1]: breadcrumb_parts.append(f"[Chapter: {current_headers[1]}]")
-        if current_headers[2]: breadcrumb_parts.append(f"[Section: {current_headers[2]}]")
-        breadcrumb = " > ".join(breadcrumb_parts)
-        
-        # Simple line-based chunking for now
-        if line.strip() and not header_match:
-            chunks.append(f"{breadcrumb}\n---\n{line}")
+            # ... update current_headers ...
+            continue
             
+        # Image detection: ![alt](filename)
+        image_matches = re.findall(r'!\[.*?\]\((.*?)\)', line)
+        image_ids = []
+        if image_mapper:
+            image_ids = [image_mapper.get_id(img) for img in image_matches if image_mapper.get_id(img)]
+            
+        # Build breadcrumb and chunk
+        # ... logic to group lines into chunks ...
+        # chunk = {"text": text, "metadata": {"image_ids": image_ids, ...}}
     return chunks
 ```
 
@@ -113,7 +113,7 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 ```bash
 git add chunker.py test_chunker.py
-git commit -m "feat: implement basic hierarchical markdown chunking"
+git commit -m "feat: implement robust markdown chunking with image-id mapping"
 ```
 
 ---
@@ -125,53 +125,19 @@ git commit -m "feat: implement basic hierarchical markdown chunking"
 - Test: `test_image_mapper.py`
 
 - [ ] **Step 1: Write failing test for image mapping**
-Create `test_image_mapper.py`.
-
-```python
-import json
-import os
-from image_mapper import ImageMapper
-
-def test_resolve_image_id(tmp_path):
-    metadata_file = tmp_path / "metadata.json"
-    metadata_file.write_text(json.dumps([{"filename": "img1.png", "image_id": "hash123"}]))
-    
-    mapper = ImageMapper(str(metadata_file))
-    assert mapper.get_id("img1.png") == "hash123"
-```
+(Same as before).
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pytest test_image_mapper.py`
-Expected: FAIL.
+(Same as before).
 
 - [ ] **Step 3: Implement ImageMapper in image_mapper.py**
-Load `metadata.json` and provide lookup.
-
-```python
-import json
-
-class ImageMapper:
-    def __init__(self, metadata_path):
-        try:
-            with open(metadata_path, 'r') as f:
-                data = json.load(f)
-                self.mapping = {item['filename']: item['image_id'] for item in data}
-        except FileNotFoundError:
-            self.mapping = {}
-
-    def get_id(self, filename):
-        return self.mapping.get(filename)
-```
+(Same as before).
 
 - [ ] **Step 4: Run test to verify it passes**
-Run: `pytest test_image_mapper.py`
-Expected: PASS.
+(Same as before).
 
 - [ ] **Step 5: Commit**
-```bash
-git add image_mapper.py test_image_mapper.py
-git commit -m "feat: add image-id mapping utility"
-```
+(Same as before).
 
 ---
 
@@ -179,50 +145,26 @@ git commit -m "feat: add image-id mapping utility"
 
 **Files:**
 - Create: `embed_books.py`
+- Test: `test_embed_books.py`
 
-- [ ] **Step 1: Implement minimal embed_books.py structure**
-Include `get_pinecone_index`, `OpenAI` client, and checkpointing logic.
+- [ ] **Step 1: Write failing test for batching and checkpointing**
+Create `test_embed_books.py` to verify the checkpoint is saved after a batch.
 
-```python
-import os
-import json
-from openai import OpenAI
-from pinecone_init import get_pinecone_index
-from chunker import chunk_markdown
-from image_mapper import ImageMapper
-from tqdm import tqdm
+- [ ] **Step 2: Implement minimal embed_books.py with checkpointing**
+Focus on the loop and state persistence.
 
-client = OpenAI()
-index = get_pinecone_index()
+- [ ] **Step 3: Add OpenAI embedding logic with retries**
+Use `tenacity` or a custom loop for retries and rate limiting.
 
-def save_checkpoint(data):
-    with open('checkpoint.json', 'w') as f:
-        json.dump(data, f)
+- [ ] **Step 4: Add Pinecone upsert logic**
+Integrate the metadata schema from the design.
 
-def load_checkpoint():
-    if os.path.exists('checkpoint.json'):
-        with open('checkpoint.json', 'r') as f:
-            return json.load(f)
-    return {"processed_files": []}
+- [ ] **Step 5: Test with a small sample file**
+Run: `python embed_books.py --limit-files 1`
+Expected: Success message and `checkpoint.json` updated.
 
-def run_pipeline():
-    checkpoint = load_checkpoint()
-    # Mock loop for structure
-    print("Starting pipeline...")
-    # ... logic to iterate files, chunk, embed, and upsert ...
-
-if __name__ == "__main__":
-    run_pipeline()
-```
-
-- [ ] **Step 2: Implement full pipeline logic in embed_books.py**
-(I will provide the full implementation during execution).
-
-- [ ] **Step 3: Test with a small sample file**
-Run: `python embed_books.py` (ensure `.env` has valid keys).
-
-- [ ] **Step 4: Commit**
+- [ ] **Step 6: Commit**
 ```bash
-git add embed_books.py
-git commit -m "feat: implement full embedding and indexing pipeline with checkpointing"
+git add embed_books.py test_embed_books.py
+git commit -m "feat: implement resilient embedding pipeline with batching and checkpointing"
 ```

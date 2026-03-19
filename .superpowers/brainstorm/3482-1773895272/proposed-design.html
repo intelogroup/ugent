@@ -1,0 +1,54 @@
+<h2>Proposed Design: Hybrid Medical RAG</h2>
+<p class="subtitle">Optimized for Accuracy, Context, and Scale</p>
+
+<div class="section">
+  <h3>1. Chunking Strategy (Hierarchical)</h3>
+  <div class="card">
+    <p>We won't just split by character count. We will respect the <strong>Markdown structure</strong>:</p>
+    <ul>
+      <li><strong>Small Chunks (256-512 tokens):</strong> For specific facts/mnemonics.</li>
+      <li><strong>Medium Chunks (1024 tokens):</strong> For whole subsections (e.g., "Nucleotides").</li>
+      <li><strong>Overlap:</strong> 15% overlap to maintain context between chunks.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="section">
+  <h3>2. Metadata Enrichment (The "Breadcrumb" Secret)</h3>
+  <p>To prevent the AI from getting lost, every chunk will be prepended with its location:</p>
+  <div class="mockup">
+    <div class="mockup-body">
+      <code style="display:block; padding:10px; background:#f4f4f4; border-radius:4px;">
+        [Book: First Aid] > [Section: Biochemistry] > [Topic: DNA Methylation] <br>
+        --- <br>
+        "DNA is methylated in imprinting. Methylation within gene promoter..."
+      </code>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>3. Image Integration (Text-Linked)</h3>
+  <p>We store the <code>image_id</code> and <code>filename</code> as metadata fields in the vector index. When a text chunk near an image is retrieved, the UI can immediately display the corresponding image from <code>extracted_images/</code>.</p>
+</div>
+
+<div class="section">
+  <h3>4. Pinecone Configuration</h3>
+  <div class="split">
+    <div class="card">
+      <h4>Index Settings</h4>
+      <ul>
+        <li><strong>Model:</strong> text-embedding-3-large</li>
+        <li><strong>Dimensions:</strong> 3072</li>
+        <li><strong>Metric:</strong> Cosine Similarity</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Scaling</h4>
+      <ul>
+        <li><strong>Namespace:</strong> "first-aid-2023", "pathoma-2021"</li>
+        <li><strong>Filters:</strong> Use Pinecone metadata filtering for book-specific search.</li>
+      </ul>
+    </div>
+  </div>
+</div>
