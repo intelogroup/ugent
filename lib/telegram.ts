@@ -11,7 +11,7 @@ function buildFactsText(facts: Fact[]): string {
     (f, i) => `${i + 1}. *[${f.category}]* ${f.fact}\n_📖 ${f.source}_`
   );
 
-  return `🩺 *High\\-Yield USMLE Facts*\n${date}\n\n${lines.join('\n\n')}\n\n_Powered by UGent MedBot_`;
+  return `🩺 *High-Yield USMLE Facts*\n${date}\n\n${lines.join('\n\n')}\n\n_Powered by UGent MedBot_`;
 }
 
 export async function sendTelegramMessage(chatId: number | string, text: string): Promise<void> {
@@ -21,20 +21,23 @@ export async function sendTelegramMessage(chatId: number | string, text: string)
     return;
   }
 
+  console.log(`[telegram] Sending message to ${chatId} (${text.length} chars)`);
+
+  const body = JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' });
   const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: 'Markdown',
-    }),
+    body,
   });
 
+  const json = await res.json();
+
   if (!res.ok) {
-    const err = await res.json();
-    throw new Error(`[telegram] API error: ${JSON.stringify(err)}`);
+    console.error(`[telegram] API error for ${chatId}: HTTP ${res.status}`, JSON.stringify(json));
+    throw new Error(`[telegram] API error ${res.status}: ${JSON.stringify(json)}`);
   }
+
+  console.log(`[telegram] Message delivered to ${chatId}, message_id=${(json as any)?.result?.message_id}`);
 }
 
 export async function sendTelegramFacts(facts: Fact[], chatId: number | string): Promise<void> {
