@@ -33,8 +33,8 @@ export async function POST(req: Request) {
 
   if (message) {
     const from: string = message.from; // international format, no +
-    // Log receipt without echoing message content (privacy)
-    console.info(`[whatsapp] Received message from ${from}`);
+    // Acknowledge receipt without logging PII (phone number)
+    void from; // consumed but not logged
   }
 
   // Always return 200 — Meta retries on non-200
