@@ -1,6 +1,7 @@
 import { openai } from '@ai-sdk/openai';
 import { streamText, StreamData } from 'ai';
 import { getContext, getImages } from '@/lib/pinecone';
+import { isAuthenticated } from '@/lib/auth-server';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -27,6 +28,13 @@ function selectModel(topScore: number) {
 }
 
 export async function POST(req: Request) {
+  if (!(await isAuthenticated())) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     const { messages } = await req.json();
 

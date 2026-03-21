@@ -1,18 +1,11 @@
-import { httpRouter, httpActionGeneric } from "convex/server";
+import { httpRouter } from "convex/server";
 import { authComponent, createAuth } from "./auth";
-import { getCorsHeaders } from "./lib/cors";
 
 const http = httpRouter();
 
-// Handle CORS preflight for all auth routes
-http.route({
-  pathPrefix: "/api/auth/",
-  method: "OPTIONS",
-  handler: httpActionGeneric(async () => {
-    return new Response(null, { status: 204, headers: getCorsHeaders() });
-  }),
-});
-
-authComponent.registerRoutes(http, createAuth);
+// registerRoutes with cors:true uses convex-helpers corsRouter to add
+// Access-Control-Allow-Origin on every auth response (not just preflight).
+// trustedOrigins is read from the betterAuth config (SITE_URL).
+authComponent.registerRoutes(http, createAuth, { cors: true });
 
 export default http;

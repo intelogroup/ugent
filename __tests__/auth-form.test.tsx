@@ -6,12 +6,10 @@ import userEvent from "@testing-library/user-event";
 vi.mock("@/lib/auth-client", () => ({
   authClient: {
     signIn: {
-      emailOtp: Object.assign(
-        vi.fn().mockResolvedValue({ data: null, error: null }),
-        {
-          sendVerificationOtp: vi.fn().mockResolvedValue({ data: {}, error: null }),
-        }
-      ),
+      emailOtp: vi.fn().mockResolvedValue({ data: { user: { id: "1" } }, error: null }),
+    },
+    emailOtp: {
+      sendVerificationOtp: vi.fn().mockResolvedValue({ data: {}, error: null }),
     },
   },
 }));
@@ -25,7 +23,7 @@ describe("EmailOtpForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset mocks to success by default
-    (authClient.signIn.emailOtp.sendVerificationOtp as ReturnType<typeof vi.fn>)
+    (authClient.emailOtp.sendVerificationOtp as ReturnType<typeof vi.fn>)
       .mockResolvedValue({ data: {}, error: null });
     (authClient.signIn.emailOtp as ReturnType<typeof vi.fn>)
       .mockResolvedValue({ data: { user: { id: "1" } }, error: null });
@@ -39,7 +37,7 @@ describe("EmailOtpForm", () => {
 
   it("shows loading state while sending OTP", async () => {
     let resolve: (v: any) => void;
-    (authClient.signIn.emailOtp.sendVerificationOtp as ReturnType<typeof vi.fn>)
+    (authClient.emailOtp.sendVerificationOtp as ReturnType<typeof vi.fn>)
       .mockReturnValue(new Promise((r) => { resolve = r; }));
 
     const user = userEvent.setup();
@@ -65,7 +63,7 @@ describe("EmailOtpForm", () => {
   });
 
   it("stays on email step if sendVerificationOtp fails", async () => {
-    (authClient.signIn.emailOtp.sendVerificationOtp as ReturnType<typeof vi.fn>)
+    (authClient.emailOtp.sendVerificationOtp as ReturnType<typeof vi.fn>)
       .mockResolvedValue({ data: null, error: { status: 500, message: "Server error" } });
 
     const user = userEvent.setup();

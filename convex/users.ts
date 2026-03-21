@@ -9,6 +9,14 @@ export const listAll = internalQuery({
 export const getCurrentUser = query({
   args: {},
   handler: async (ctx) => {
-    return authComponent.getAuthUser(ctx);
+    // getAuthUser throws ConvexError("Unauthenticated") when there's no session,
+    // which crashes useQuery. Guard with identity check first.
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+    try {
+      return await authComponent.getAuthUser(ctx);
+    } catch {
+      return null;
+    }
   },
 });

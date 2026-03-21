@@ -19,7 +19,7 @@ export function EmailOtpForm({ onSuccess }: EmailOtpFormProps) {
     setLoading(true);
     setError("");
 
-    const { error } = await authClient.signIn.emailOtp.sendVerificationOtp({
+    const { error } = await authClient.emailOtp.sendVerificationOtp({
       email,
       type: "sign-in",
     });

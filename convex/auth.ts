@@ -1,6 +1,6 @@
 // NOTE: TypeScript errors on `components` will resolve after running `npx convex dev`
 import { createClient, type AuthFunctions, type GenericCtx } from "@convex-dev/better-auth";
-import { convex } from "@convex-dev/better-auth/plugins";
+import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
 import { components, internal } from "./_generated/api";
 import { DataModel } from "./_generated/dataModel";
 import { query } from "./_generated/server";
@@ -9,7 +9,10 @@ import { emailOTP } from "better-auth/plugins";
 import { Resend } from "resend";
 import authConfig from "./auth.config";
 
+// SITE_URL = frontend origin (e.g. http://localhost:3000 or https://ugent.app)
+// CONVEX_SITE_URL = built-in Convex env var (e.g. https://posh-goat-161.convex.site)
 const siteUrl = process.env.SITE_URL!;
+const convexSiteUrl = process.env.CONVEX_SITE_URL!;
 
 // authFunctions must point to internal.auth for triggers to work
 const authFunctions: AuthFunctions = internal.auth;
@@ -50,10 +53,12 @@ export const { onCreate, onUpdate } = authComponent.triggersApi();
 
 export const createAuth = (ctx: GenericCtx<DataModel>) => {
   return betterAuth({
-    baseURL: siteUrl,
+    baseURL: convexSiteUrl,
+    trustedOrigins: [siteUrl],
     database: authComponent.adapter(ctx),
     plugins: [
       convex({ authConfig }),
+      crossDomain({ siteUrl }),
       emailOTP({
         async sendVerificationOTP({ email, otp, type }) {
           // Lazy init: only create Resend when actually sending (not at module load)
