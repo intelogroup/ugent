@@ -128,5 +128,4 @@ export async function sendFactsEmail(facts: Fact[]): Promise<void> {
     throw new Error(`Resend failed: ${error.message}`);
   }
 
-  console.log(`[email] Sent ${facts.length} facts to ${to}`);
 }
