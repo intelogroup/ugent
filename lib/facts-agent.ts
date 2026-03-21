@@ -58,9 +58,14 @@ function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+let _factsOpenAI: OpenAI | null = null;
+
 function getOpenAIClient(): OpenAI {
-  if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not defined');
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  if (!_factsOpenAI) {
+    if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not defined');
+    _factsOpenAI = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return _factsOpenAI;
 }
 
 function getTavilyClient() {
