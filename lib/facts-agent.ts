@@ -112,13 +112,20 @@ async function searchWebForContext(): Promise<string> {
 export async function generateFacts(): Promise<Fact[]> {
   const topics = pickRandomTopics(3);
 
-  // Run Pinecone + web search in parallel
-  const [contextResults, webContext] = await Promise.all([
-    Promise.all(
-      topics.map((topic) => getContext(topic, ['first-aid-2023', 'pathoma-2021']))
-    ),
-    searchWebForContext(),
-  ]);
+  // Run Pinecone + web search in parallel — gracefully degrade on failure
+  let contextResults: Awaited<ReturnType<typeof getContext>>[];
+  let webContext: string;
+  try {
+    [contextResults, webContext] = await Promise.all([
+      Promise.all(
+        topics.map((topic) => getContext(topic, ['first-aid-2023', 'pathoma-2021']))
+      ),
+      searchWebForContext(),
+    ]);
+  } catch (error) {
+    console.error('[facts-agent] Context retrieval failed, using fallbacks:', error);
+    return getFallbackFacts();
+  }
 
   // Build textbook context block
   const textbookBlock = contextResults
