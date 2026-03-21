@@ -9,13 +9,18 @@ export async function GET(req: Request) {
     return new Response('Unauthorized', { status: 401 });
   }
 
-  const facts = await generateFacts();
-  console.log(`[cron/telegram-facts] Generated ${facts.length} facts, sending to Telegram...`);
+  let facts;
+  try {
+    facts = await generateFacts();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[cron/telegram-facts] Failed to generate facts:', msg);
+    return Response.json({ ok: false, error: msg }, { status: 500 });
+  }
 
   let telegramError: string | null = null;
   try {
     await sendTelegramFactsToAll(facts);
-    console.log('[cron/telegram-facts] Telegram send complete');
   } catch (err) {
     telegramError = err instanceof Error ? err.message : String(err);
     console.error('[cron/telegram-facts] Telegram send failed:', telegramError);

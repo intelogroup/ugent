@@ -1,6 +1,10 @@
 import type { Fact } from './facts-agent';
 
-const API_URL = `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+function getApiUrl(): string {
+  const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  if (!phoneId) throw new Error('[whatsapp] WHATSAPP_PHONE_NUMBER_ID not set');
+  return `https://graph.facebook.com/v19.0/${phoneId}/messages`;
+}
 
 function buildFactsText(facts: Fact[]): string {
   const date = new Date().toLocaleDateString('en-US', {
@@ -28,7 +32,7 @@ export async function sendWhatsAppFacts(
 
   const body = buildFactsText(facts);
 
-  const res = await fetch(API_URL, {
+  const res = await fetch(getApiUrl(), {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -43,11 +47,9 @@ export async function sendWhatsAppFacts(
   });
 
   if (!res.ok) {
-    const err = await res.json();
+    const err = await res.json().catch(() => ({}));
     throw new Error(`[whatsapp] API error: ${JSON.stringify(err)}`);
   }
-
-  console.log(`[whatsapp] Sent ${facts.length} facts to ${to}`);
 }
 
 export async function sendWhatsAppFactsToAll(facts: Fact[]): Promise<void> {

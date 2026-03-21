@@ -19,19 +19,22 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    // Malformed JSON — still return 200 so Meta doesn't retry
+    return new Response('OK', { status: 200 });
+  }
 
-  const entry = body?.entry?.[0];
+  const entry = (body as any)?.entry?.[0];
   const change = entry?.changes?.[0];
   const message = change?.value?.messages?.[0];
 
   if (message) {
     const from: string = message.from; // international format, no +
-    const text: string = message?.text?.body ?? '';
-    console.log(`[whatsapp] Message from ${from}: "${text}"`);
-    console.log(
-      `[whatsapp] To subscribe this number, add ${from} to WHATSAPP_RECIPIENTS env var`
-    );
+    // Log receipt without echoing message content (privacy)
+    console.info(`[whatsapp] Received message from ${from}`);
   }
 
   // Always return 200 — Meta retries on non-200

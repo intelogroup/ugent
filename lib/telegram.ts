@@ -14,14 +14,18 @@ function buildFactsText(facts: Fact[]): string {
   return `🩺 *High-Yield USMLE Facts*\n${date}\n\n${lines.join('\n\n')}\n\n_Powered by UGent MedBot_`;
 }
 
+interface TelegramSendResult {
+  ok: boolean;
+  result?: { message_id: number };
+  description?: string;
+}
+
 export async function sendTelegramMessage(chatId: number | string, text: string): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) {
     console.warn('[telegram] TELEGRAM_BOT_TOKEN not set — skipping');
     return;
   }
-
-  console.log(`[telegram] Sending message to ${chatId} (${text.length} chars)`);
 
   const body = JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' });
   const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -30,20 +34,17 @@ export async function sendTelegramMessage(chatId: number | string, text: string)
     body,
   });
 
-  const json = await res.json();
+  const json: TelegramSendResult = await res.json();
 
   if (!res.ok) {
-    console.error(`[telegram] API error for ${chatId}: HTTP ${res.status}`, JSON.stringify(json));
-    throw new Error(`[telegram] API error ${res.status}: ${JSON.stringify(json)}`);
+    console.error(`[telegram] API error for ${chatId}: HTTP ${res.status}`, json.description);
+    throw new Error(`[telegram] API error ${res.status}: ${json.description ?? 'unknown'}`);
   }
-
-  console.log(`[telegram] Message delivered to ${chatId}, message_id=${(json as any)?.result?.message_id}`);
 }
 
 export async function sendTelegramFacts(facts: Fact[], chatId: number | string): Promise<void> {
   const text = buildFactsText(facts);
   await sendTelegramMessage(chatId, text);
-  console.log(`[telegram] Sent ${facts.length} facts to ${chatId}`);
 }
 
 export async function sendTelegramFactsToAll(facts: Fact[]): Promise<void> {
