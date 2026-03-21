@@ -9,7 +9,7 @@ Focus: build the full study loop for medical students — ask questions, get ans
 - [ ] **Chat UI with source attribution** — chat page exists but answers should cite the chapter and book (e.g., "First Aid Ch. 3 — Cardiology"); without this, answers are untrustworthy
 - [ ] **Search/browse interface** — let students browse by organ system or chapter before asking; pure Q&A without context navigation is disorienting
 - [ ] **User dashboard** — a home screen after login: recent chats, bookmarked chapters, daily fact if subscribed
-- [ ] **Auth state guard** — protect all app routes; currently login page exists but route protection is unclear
+- [x] **Auth state guard** — protect all app routes; currently login page exists but route protection is unclear
 - [ ] **Image display in answers** — embed_images.py is built; wire image retrieval into chat responses for diagrams and tables
 
 ---
