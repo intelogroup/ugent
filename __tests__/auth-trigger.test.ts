@@ -4,8 +4,10 @@ import schema from "../convex/schema";
 import { api, internal } from "../convex/_generated/api";
 
 describe("auth triggers — user persistence", () => {
+  const modules = import.meta.glob("../convex/**/*.ts");
+
   it("creates a users table entry when a Better Auth user is created", async () => {
-    const t = convexTest(schema);
+    const t = convexTest(schema, modules);
 
     // Simulate trigger: create a Better Auth user object
     const authUser = {
@@ -30,7 +32,7 @@ describe("auth triggers — user persistence", () => {
   });
 
   it("sets plan to 'trial' and trialStartedAt on creation", async () => {
-    const t = convexTest(schema);
+    const t = convexTest(schema, modules);
 
     const authUser = {
       _id: "auth_user_456",
@@ -51,7 +53,7 @@ describe("auth triggers — user persistence", () => {
   });
 
   it("does not create duplicate users table entry on second onCreate", async () => {
-    const t = convexTest(schema);
+    const t = convexTest(schema, modules);
 
     const authUser = {
       _id: "auth_user_789",
@@ -75,7 +77,7 @@ describe("auth triggers — user persistence", () => {
   });
 
   it("updates email in users table when Better Auth user email changes", async () => {
-    const t = convexTest(schema);
+    const t = convexTest(schema, modules);
 
     const authUser = {
       _id: "auth_user_update",
@@ -105,7 +107,7 @@ describe("auth triggers — user persistence", () => {
   });
 
   it("does not update users table when email is unchanged", async () => {
-    const t = convexTest(schema);
+    const t = convexTest(schema, modules);
 
     const authUser = {
       _id: "auth_user_noupdate",
@@ -134,10 +136,10 @@ describe("auth triggers — user persistence", () => {
   });
 
   it("handles authUser with no email (emailless auth provider)", async () => {
-    const t = convexTest(schema);
+    const t = convexTest(schema, modules);
 
     const authUser = {
-      _id: "auth_user_noeią",
+      _id: "auth_user_noemail",
       email: undefined,
       createdAt: Date.now(),
     };
@@ -152,6 +154,6 @@ describe("auth triggers — user persistence", () => {
 
     expect(users).toHaveLength(1);
     expect(users[0].email).toBeUndefined();
-    expect(users[0].authId).toBe("auth_user_noeią");
+    expect(users[0].authId).toBe("auth_user_noemail");
   });
 });
