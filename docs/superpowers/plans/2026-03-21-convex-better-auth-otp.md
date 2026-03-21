@@ -135,7 +135,7 @@ Expected: 4 tests fail (stub throws "not implemented").
 - [ ] **Step 4: Commit failing tests**
 
 ```bash
-git add __tests__/auth-cors.test.ts lib/cors.ts
+git add __tests__/auth-cors.test.ts convex/lib/cors.ts
 git commit -m "test: add failing CORS header tests"
 ```
 
@@ -321,7 +321,7 @@ Note the import pattern for `convex-test` — copy it exactly.
 import { convexTest } from "convex-test";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import schema from "../convex/schema";
-import { internal } from "../convex/_generated/api";
+import { api, internal } from "../convex/_generated/api";
 
 // convex-test mocks the full Convex backend in memory
 // It runs the actual schema validators and mutation logic
@@ -457,7 +457,7 @@ describe("auth triggers", () => {
 
   it("getCurrentUser returns null when no auth context", async () => {
     const t = convexTest(schema);
-    const user = await t.query(api.auth.getCurrentUser, {});
+    const user = await t.query(api.auth.getCurrentUser, {});  // api imported above
     expect(user).toBeNull();
   });
 });
@@ -533,7 +533,7 @@ Expected: 4 tests pass.
 - [ ] **Step 3: Commit**
 
 ```bash
-git add lib/cors.ts
+git add convex/lib/cors.ts
 git commit -m "feat: add getCorsHeaders helper with required SITE_URL"
 ```
 
