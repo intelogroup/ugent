@@ -144,7 +144,7 @@ function DashboardContent() {
             </h2>
             {recentThreads && recentThreads.length > 0 && (
               <button
-                onClick={() => router.push("/chat")}
+                onClick={() => router.push("/history")}
                 className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
               >
                 View all
@@ -173,7 +173,7 @@ function DashboardContent() {
               {recentThreads.map((thread) => (
                 <button
                   key={thread._id}
-                  onClick={() => router.push("/chat")}
+                  onClick={() => router.push(`/chat?thread=${thread._id}`)}
                   className="w-full flex items-start gap-3 p-3 rounded-xl bg-secondary/50 hover:bg-accent border border-transparent hover:border-border transition-all text-left group"
                 >
                   <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-950 flex items-center justify-center text-blue-600 dark:text-blue-400 mt-0.5">

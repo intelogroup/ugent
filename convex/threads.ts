@@ -10,7 +10,8 @@ export const getOrCreateWebThread = mutation({
       .filter((q) =>
         q.and(
           q.eq(q.field("platform"), "web"),
-          q.eq(q.field("archivedAt"), undefined)
+          q.eq(q.field("archivedAt"), undefined),
+          q.eq(q.field("chapterScope"), undefined)
         )
       )
       .first();
@@ -23,6 +24,52 @@ export const getOrCreateWebThread = mutation({
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
+  },
+});
+
+/**
+ * Create a new thread scoped to a specific chapter.
+ * Always creates a fresh thread (no reuse) so each chapter study session is distinct.
+ */
+export const createChapterThread = mutation({
+  args: {
+    userId: v.string(),
+    chapterScope: v.object({
+      bookSlug: v.string(),
+      chapterNumber: v.number(),
+    }),
+    title: v.optional(v.string()),
+  },
+  handler: async (ctx, { userId, chapterScope, title }) => {
+    return await ctx.db.insert("threads", {
+      userId,
+      platform: "web",
+      chapterScope,
+      title,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * Archive the current active thread so a new one can be created.
+ * Used by "New Chat" to start fresh without losing history.
+ */
+export const archiveThread = mutation({
+  args: { threadId: v.id("threads") },
+  handler: async (ctx, { threadId }) => {
+    await ctx.db.patch(threadId, { archivedAt: Date.now() });
+  },
+});
+
+/**
+ * Get a single thread by ID (for resuming from history).
+ */
+export const getThread = query({
+  args: { threadId: v.id("threads") },
+  handler: async (ctx, { threadId }) => {
+    return await ctx.db.get(threadId);
   },
 });
 

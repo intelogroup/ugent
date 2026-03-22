@@ -35,6 +35,13 @@ export default defineSchema({
       v.literal("whatsapp")
     ),
     title: v.optional(v.string()),
+    /** Chapter scope for navigator — e.g. { bookSlug: "pathoma", chapterNumber: 3 } */
+    chapterScope: v.optional(
+      v.object({
+        bookSlug: v.string(),
+        chapterNumber: v.number(),
+      })
+    ),
     archivedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),

@@ -2,16 +2,17 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu, Bot, SquarePen, Home, Search, MessageSquare, Layers } from "lucide-react";
+import { Menu, Bot, SquarePen, Home, Search, MessageSquare, Layers, Clock, BookOpen } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { WhatsAppSubscribe } from "@/components/whatsapp/whatsapp-subscribe";
 
 interface HeaderProps {
   onMenuClick: () => void;
   onNewChat?: () => void;
+  onChapterNavToggle?: () => void;
 }
 
-export function Header({ onMenuClick, onNewChat }: HeaderProps) {
+export function Header({ onMenuClick, onNewChat, onChapterNavToggle }: HeaderProps) {
   const pathname = usePathname();
 
   return (
@@ -67,6 +68,17 @@ export function Header({ onMenuClick, onNewChat }: HeaderProps) {
             <MessageSquare className="h-5 w-5" />
           </Link>
           <Link
+            href="/history"
+            className={`p-2 rounded-lg transition-colors ${
+              pathname === "/history"
+                ? "bg-accent text-foreground"
+                : "hover:bg-accent text-muted-foreground"
+            }`}
+            aria-label="Chat History"
+          >
+            <Clock className="h-5 w-5" />
+          </Link>
+          <Link
             href="/review"
             className={`p-2 rounded-lg transition-colors ${
               pathname === "/review"
@@ -77,6 +89,15 @@ export function Header({ onMenuClick, onNewChat }: HeaderProps) {
           >
             <Layers className="h-5 w-5" />
           </Link>
+          {onChapterNavToggle && (
+            <button
+              onClick={onChapterNavToggle}
+              className="p-2 hover:bg-accent rounded-lg transition-colors text-muted-foreground"
+              aria-label="Chapter Navigator"
+            >
+              <BookOpen className="h-5 w-5" />
+            </button>
+          )}
           <WhatsAppSubscribe />
           <NotificationBell />
           <button
