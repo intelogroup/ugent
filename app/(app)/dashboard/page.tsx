@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { AuthErrorBoundary } from "@/components/auth/auth-error-boundary";
 import {
   MessageSquare,
   Search,
@@ -14,6 +15,7 @@ import {
   Sparkles,
   ArrowRight,
   Bot,
+  Bookmark,
 } from "lucide-react";
 
 const MEDICAL_FACTS = [
@@ -51,13 +53,17 @@ function formatTimeAgo(timestamp: number): string {
   });
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const currentUser = useQuery(api.users.getCurrentUser);
   const recentThreads = useQuery(
     api.threads.listRecentThreadsWithPreview,
     currentUser?._id ? { userId: currentUser._id, limit: 5 } : "skip"
+  );
+  const bookmarks = useQuery(
+    api.bookmarks.listBookmarks,
+    currentUser?._id ? { limit: 3 } : "skip"
   );
 
   const dailyFact = getDailyFact();
@@ -205,6 +211,39 @@ export default function DashboardPage() {
           )}
         </section>
 
+        {/* Saved bookmarks */}
+        {bookmarks && bookmarks.length > 0 && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold uppercase text-muted-foreground tracking-wider flex items-center gap-1.5">
+                <Bookmark className="h-3.5 w-3.5" />
+                Saved
+              </h2>
+            </div>
+            <div className="space-y-2">
+              {bookmarks.map((bm) => (
+                <button
+                  key={bm._id}
+                  onClick={() => router.push("/chat")}
+                  className="w-full text-left p-3 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100/50 dark:hover:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50 transition-all"
+                >
+                  {bm.question && (
+                    <p className="text-xs text-muted-foreground truncate mb-1">
+                      Q: {bm.question}
+                    </p>
+                  )}
+                  <p className="text-sm text-foreground line-clamp-2">
+                    {bm.answer}
+                  </p>
+                  <span className="text-[10px] text-muted-foreground mt-1 block">
+                    {formatTimeAgo(bm.createdAt)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Study resources quick links */}
         <section className="space-y-3 pb-6">
           <h2 className="text-sm font-semibold uppercase text-muted-foreground tracking-wider">
@@ -229,5 +268,13 @@ export default function DashboardPage() {
         </section>
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <AuthErrorBoundary>
+      <DashboardContent />
+    </AuthErrorBoundary>
   );
 }

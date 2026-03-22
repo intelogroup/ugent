@@ -1,12 +1,15 @@
 'use client';
 
 import { Message } from 'ai';
-import { Bot, AlertCircle, Volume2, VolumeX } from 'lucide-react';
+import { Bot, AlertCircle, Volume2, VolumeX, ImageOff, Bookmark } from 'lucide-react';
 import { useState, useRef, useCallback } from 'react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 import { cn } from '@/lib/utils';
 import ImageRenderer from '../image-renderer';
 import { cleanForSpeech } from '@/lib/clean-for-speech';
 import { SourceCitations, type SourceInfo } from './source-citations';
+import type { Id } from '@/convex/_generated/dataModel';
 
 interface MessageBubbleProps {
   message: Message;
@@ -84,6 +87,80 @@ function VoiceButton({ text }: { text: string }) {
   );
 }
 
+/**
+ * Bookmark button for assistant messages. Stars Q&A pairs for later review.
+ */
+function BookmarkButton({ messageId }: { messageId: string }) {
+  // Only query if the ID looks like a valid Convex ID (not a temp useChat ID)
+  const isConvexId = messageId.length > 10 && !messageId.startsWith('msg-');
+  const isBookmarked = useQuery(
+    api.bookmarks.isBookmarked,
+    isConvexId ? { messageId: messageId as Id<"messages"> } : "skip"
+  );
+  const toggleBookmark = useMutation(api.bookmarks.toggleBookmark);
+  const [isToggling, setIsToggling] = useState(false);
+
+  if (!isConvexId) return null;
+
+  return (
+    <button
+      onClick={async () => {
+        if (isToggling) return;
+        setIsToggling(true);
+        try {
+          await toggleBookmark({ messageId: messageId as Id<"messages"> });
+        } finally {
+          setIsToggling(false);
+        }
+      }}
+      disabled={isToggling}
+      title={isBookmarked ? 'Remove bookmark' : 'Bookmark this answer'}
+      className={cn(
+        'mt-2 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
+        isBookmarked
+          ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300'
+          : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800',
+        isToggling && 'opacity-50'
+      )}
+    >
+      <Bookmark className={cn('w-3.5 h-3.5', isBookmarked && 'fill-current')} />
+      {isBookmarked && <span>Saved</span>}
+    </button>
+  );
+}
+
+/**
+ * Renders an image from annotation data with error fallback for missing files.
+ */
+function AnnotationImage({ imageId }: { imageId: string }) {
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError) {
+    return (
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50 shadow-sm">
+        <div className="flex flex-col items-center justify-center gap-2 py-6 text-gray-400">
+          <ImageOff className="w-6 h-6" />
+          <p className="text-xs">Image not available</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div className="relative w-full max-w-2xl mx-auto">
+        <img
+          src={`/extracted_images/images/${imageId}.png`}
+          alt="Textbook figure"
+          className="w-full h-auto object-contain"
+          loading="lazy"
+          onError={() => setHasError(true)}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user';
 
@@ -93,6 +170,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const contextFound = contextStatus ? contextStatus.context_found : true;
   const isContextMissing = !isUser && contextFound === false;
   const imageIds: string[] = contextStatus?.images ?? [];
+  const sources: SourceInfo[] = contextStatus?.sources ?? [];
 
   return (
     <div
@@ -134,25 +212,19 @@ export function MessageBubble({ message }: MessageBubbleProps) {
               {imageIds.length > 0 && (
                 <div className="mt-4 flex flex-col gap-3">
                   {imageIds.map((imageId) => (
-                    <div
-                      key={imageId}
-                      className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
-                    >
-                      <div className="relative w-full max-w-2xl mx-auto">
-                        <img
-                          src={`/extracted_images/images/${imageId}.png`}
-                          alt={`Textbook figure`}
-                          className="w-full h-auto object-contain"
-                          loading="lazy"
-                        />
-                      </div>
-                    </div>
+                    <AnnotationImage key={imageId} imageId={imageId} />
                   ))}
                 </div>
               )}
-              {message.content.length > 20 && (
-                <VoiceButton text={message.content} />
+              {sources.length > 0 && (
+                <SourceCitations sources={sources} />
               )}
+              <div className="flex items-center gap-1">
+                {message.content.length > 20 && (
+                  <VoiceButton text={message.content} />
+                )}
+                <BookmarkButton messageId={message.id} />
+              </div>
             </>
           )}
         </div>

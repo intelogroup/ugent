@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MessageSquare, Settings, Monitor, SquarePen, Home, Search, BookOpen } from "lucide-react";
+import { useState } from "react";
+import { X, MessageSquare, Settings, Monitor, SquarePen, Home, Search, BookOpen, Layers, ChevronDown, ChevronRight } from "lucide-react";
 
 interface DrawerProps {
   isOpen: boolean;
@@ -10,8 +11,53 @@ interface DrawerProps {
   onNewChat: () => void;
 }
 
+// Chapter data for the outline navigator
+const PATHOMA_CHAPTERS = [
+  "Growth Adaptations, Cellular Injury, and Cell Death",
+  "Inflammation, Inflammatory Disorders, and Wound Healing",
+  "Principles of Neoplasia",
+  "Hemostasis and Related Disorders",
+  "Red Blood Cell Disorders",
+  "White Blood Cell Disorders",
+  "Vascular Pathology",
+  "Cardiac Pathology",
+  "Respiratory Tract Pathology",
+  "Gastrointestinal Pathology",
+  "Exocrine Pancreas, Gallbladder, and Liver Pathology",
+  "Kidney and Urinary Tract Pathology",
+  "Female Genital System and Gestational Pathology",
+  "Male Genital System Pathology",
+  "Endocrine Pathology",
+  "Breast Pathology",
+  "Central Nervous System Pathology",
+  "Musculoskeletal Pathology",
+  "Skin Pathology",
+];
+
+const FIRST_AID_CHAPTERS = [
+  "Section I Guide",
+  "Biochemistry",
+  "Immunology",
+  "Microbiology",
+  "Pathology",
+  "Pharmacology",
+  "Public Health Sciences",
+  "Cardiovascular",
+  "Endocrine",
+  "Gastrointestinal",
+  "Hematology and Oncology",
+  "Musculoskeletal",
+  "Neurology",
+  "Psychiatry",
+  "Renal",
+  "Reproductive",
+  "Respiratory",
+];
+
 export function Drawer({ isOpen, onClose, onNewChat }: DrawerProps) {
   const router = useRouter();
+  const [pathomaOpen, setPathomaOpen] = useState(false);
+  const [firstAidOpen, setFirstAidOpen] = useState(false);
 
   const navigateTo = (path: string) => {
     onClose();
@@ -68,6 +114,13 @@ export function Drawer({ isOpen, onClose, onNewChat }: DrawerProps) {
                   <span>Browse Topics</span>
                 </button>
                 <button
+                  onClick={() => navigateTo("/review")}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium hover:bg-accent rounded-lg transition-colors"
+                >
+                  <Layers className="h-4 w-4 text-muted-foreground" />
+                  <span>Review Cards</span>
+                </button>
+                <button
                   onClick={onNewChat}
                   className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg transition-colors"
                 >
@@ -86,6 +139,80 @@ export function Drawer({ isOpen, onClose, onNewChat }: DrawerProps) {
                   <p className="text-xs text-center opacity-50">
                     No saved chats yet
                   </p>
+                </div>
+              </section>
+
+              {/* Chapter Outline Navigator */}
+              <section>
+                <h3 className="px-2 mb-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+                  Chapter Outlines
+                </h3>
+                <div className="space-y-1">
+                  {/* Pathoma */}
+                  <button
+                    onClick={() => setPathomaOpen(!pathomaOpen)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium hover:bg-accent rounded-lg transition-colors"
+                  >
+                    <BookOpen className="h-4 w-4 text-muted-foreground" />
+                    <span className="flex-1 text-left">Pathoma (2021)</span>
+                    {pathomaOpen ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                  {pathomaOpen && (
+                    <div className="ml-4 space-y-0.5">
+                      {PATHOMA_CHAPTERS.map((title, i) => (
+                        <button
+                          key={`pathoma-${i}`}
+                          onClick={() => {
+                            onClose();
+                            const prompt = encodeURIComponent(
+                              `Tell me about ${title} from Pathoma`
+                            );
+                            router.push(`/chat?prompt=${prompt}`);
+                          }}
+                          className="w-full text-left px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors truncate"
+                        >
+                          Ch. {i + 1}: {title}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* First Aid */}
+                  <button
+                    onClick={() => setFirstAidOpen(!firstAidOpen)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium hover:bg-accent rounded-lg transition-colors"
+                  >
+                    <BookOpen className="h-4 w-4 text-muted-foreground" />
+                    <span className="flex-1 text-left">First Aid (2023)</span>
+                    {firstAidOpen ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                  {firstAidOpen && (
+                    <div className="ml-4 space-y-0.5">
+                      {FIRST_AID_CHAPTERS.map((title, i) => (
+                        <button
+                          key={`fa-${i}`}
+                          onClick={() => {
+                            onClose();
+                            const prompt = encodeURIComponent(
+                              `Tell me about ${title} from First Aid`
+                            );
+                            router.push(`/chat?prompt=${prompt}`);
+                          }}
+                          className="w-full text-left px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors truncate"
+                        >
+                          Ch. {i + 1}: {title}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </section>
 

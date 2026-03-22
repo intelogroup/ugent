@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu, Bot, SquarePen, Home, Search, MessageSquare } from "lucide-react";
+import { Menu, Bot, SquarePen, Home, Search, MessageSquare, Layers } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { WhatsAppSubscribe } from "@/components/whatsapp/whatsapp-subscribe";
 
@@ -65,6 +65,17 @@ export function Header({ onMenuClick, onNewChat }: HeaderProps) {
             aria-label="Chat"
           >
             <MessageSquare className="h-5 w-5" />
+          </Link>
+          <Link
+            href="/review"
+            className={`p-2 rounded-lg transition-colors ${
+              pathname === "/review"
+                ? "bg-accent text-foreground"
+                : "hover:bg-accent text-muted-foreground"
+            }`}
+            aria-label="Review"
+          >
+            <Layers className="h-5 w-5" />
           </Link>
           <WhatsAppSubscribe />
           <NotificationBell />
