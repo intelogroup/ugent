@@ -11,6 +11,8 @@ vi.mock("@/lib/auth-client", () => ({
     emailOtp: {
       sendVerificationOtp: vi.fn().mockResolvedValue({ data: {}, error: null }),
     },
+    // Called after OTP sign-in to confirm session is live before navigation
+    getSession: vi.fn().mockResolvedValue({ data: { session: { id: "s1" } }, error: null }),
   },
 }));
 

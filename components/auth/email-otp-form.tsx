@@ -39,11 +39,10 @@ export function EmailOtpForm({ onSuccess }: EmailOtpFormProps) {
     setLoading(true);
     setError("");
 
-    const { error } = await authClient.signIn.emailOtp({ email, otp });
-
-    setLoading(false);
+    const { data, error } = await authClient.signIn.emailOtp({ email, otp });
 
     if (error) {
+      setLoading(false);
       if (error.status === 400) {
         setError("Invalid or expired code");
       } else if (error.status === 429) {
@@ -54,6 +53,15 @@ export function EmailOtpForm({ onSuccess }: EmailOtpFormProps) {
       return;
     }
 
+    // After OTP sign-in, the convexClient plugin sets the Convex auth token
+    // asynchronously from the session response. Calling getSession() here forces
+    // the plugin to confirm the session is live before we navigate, preventing
+    // the race where the dashboard renders before Convex receives the token.
+    if (data) {
+      await authClient.getSession();
+    }
+
+    setLoading(false);
     onSuccess();
   };
 
