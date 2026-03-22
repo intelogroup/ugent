@@ -50,6 +50,18 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_thread", ["threadId", "createdAt"]),
 
+  bookmarks: defineTable({
+    userId: v.string(), // Better Auth user ID
+    messageId: v.id("messages"),
+    threadId: v.id("threads"),
+    /** Snapshot of the Q&A pair so bookmarks remain useful if thread is deleted */
+    question: v.string(),
+    answer: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId", "createdAt"])
+    .index("by_user_message", ["userId", "messageId"]),
+
   jobs: defineTable({
     userId: v.id("users"),
     type: v.union(v.literal("research"), v.literal("digest")),
