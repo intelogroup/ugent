@@ -8,6 +8,13 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }))
 
+// Mock convex/react so NotificationBell's useConvexAuth doesn't require a provider
+vi.mock('convex/react', () => ({
+  useConvexAuth: () => ({ isAuthenticated: true, isLoading: false }),
+  useQuery: () => undefined,
+  useMutation: () => vi.fn(),
+}))
+
 describe('Header Component', () => {
   it('renders the bot title correctly', () => {
     render(<Header onMenuClick={() => {}} />)
