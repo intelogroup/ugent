@@ -19,7 +19,7 @@ Focus: build the full study loop for medical students — ask questions, get ans
 - [x] **Bookmark / save** — star a Q&A pair or chapter section to review later; stored in Convex per user
 - [x] **Spaced repetition queue** — saved items surface as flashcard-style review prompts; simple interval logic only
 - [x] **Chapter outline navigator** — sidebar listing First Aid and Pathoma chapters; click to ask questions scoped to that chapter
-- [ ] **Daily fact push** — cron already sends facts via Telegram/WhatsApp; add opt-in to web notifications too
+- [x] **Daily fact push** — cron already sends facts via Telegram/WhatsApp; add opt-in to web notifications too
 - [x] **Chat history** — per-user conversation log; student can return to a prior session and continue
 - [x] **Confidence rating** — after each answer, student taps "got it / unsure / wrong"; used to surface weak areas
 
@@ -30,7 +30,7 @@ Focus: build the full study loop for medical students — ask questions, get ans
 - [ ] **Quick quiz mode** — generate 5 MCQs from a selected chapter; Convex action calls LLM with chapter context
 - [ ] **Progress heatmap** — which chapters/topics has the student engaged with most; simple counts, no ML
 - [ ] **WhatsApp / Telegram onboarding link** — connect existing bot delivery to web account with QR code
-- [ ] **Dark mode** — long study sessions; wire up Tailwind dark class toggle
+- [x] **Dark mode** — long study sessions; wire up Tailwind dark class toggle
 
 ---
 

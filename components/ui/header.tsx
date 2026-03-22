@@ -2,9 +2,10 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu, Bot, SquarePen, Home, Search, MessageSquare, Layers, Clock, BookOpen } from "lucide-react";
+import { Menu, Bot, SquarePen, Home, Search, MessageSquare, Layers, Clock, BookOpen, Sun, Moon } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { WhatsAppSubscribe } from "@/components/whatsapp/whatsapp-subscribe";
+import { useTheme } from "@/components/theme-provider";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -14,6 +15,7 @@ interface HeaderProps {
 
 export function Header({ onMenuClick, onNewChat, onChapterNavToggle }: HeaderProps) {
   const pathname = usePathname();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
@@ -100,6 +102,13 @@ export function Header({ onMenuClick, onNewChat, onChapterNavToggle }: HeaderPro
           )}
           <WhatsAppSubscribe />
           <NotificationBell />
+          <button
+            onClick={toggleTheme}
+            className="p-2 hover:bg-accent rounded-lg transition-colors text-muted-foreground"
+            aria-label="Toggle dark mode"
+          >
+            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
           <button
             onClick={onNewChat}
             className="p-2 hover:bg-accent rounded-lg transition-colors"
