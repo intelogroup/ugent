@@ -2,6 +2,7 @@ import { revalidateTag } from 'next/cache';
 import { generateFacts } from '@/lib/facts-agent';
 import { sendFactsEmail } from '@/lib/email';
 import { sendWhatsAppFactsToAll } from '@/lib/whatsapp';
+import { sendPushNotificationsToAll } from '@/lib/send-push-notifications';
 
 export const maxDuration = 60;
 
@@ -21,6 +22,9 @@ export async function GET(req: Request) {
   );
   sendWhatsAppFactsToAll(facts).catch((err) =>
     console.error('[cron/facts] WhatsApp send failed:', err)
+  );
+  sendPushNotificationsToAll(facts).catch((err) =>
+    console.error('[cron/facts] Push send failed:', err)
   );
 
   return Response.json({

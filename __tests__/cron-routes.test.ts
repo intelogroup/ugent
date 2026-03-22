@@ -12,6 +12,9 @@ vi.mock('@/lib/whatsapp', () => ({
 vi.mock('@/lib/telegram', () => ({
   sendTelegramFactsToAll: vi.fn().mockResolvedValue(undefined),
 }));
+vi.mock('@/lib/send-push-notifications', () => ({
+  sendPushNotificationsToAll: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock('next/cache', () => ({
   revalidateTag: vi.fn(),
 }));
@@ -22,6 +25,7 @@ import { generateFacts } from '@/lib/facts-agent';
 import { sendFactsEmail } from '@/lib/email';
 import { sendWhatsAppFactsToAll } from '@/lib/whatsapp';
 import { sendTelegramFactsToAll } from '@/lib/telegram';
+import { sendPushNotificationsToAll } from '@/lib/send-push-notifications';
 
 const VALID_SECRET = 'test-cron-secret';
 
@@ -61,12 +65,13 @@ describe('GET /api/cron/facts', () => {
     expect(body.sentAt).toBeDefined();
   });
 
-  it('fires email and WhatsApp in background (does not await)', async () => {
+  it('fires email, WhatsApp, and push in background (does not await)', async () => {
     vi.mocked(generateFacts).mockResolvedValue(['Fact'] as any);
     await cronFactsGET(makeRequest(`Bearer ${VALID_SECRET}`));
-    // Both should be called (fire-and-forget pattern)
+    // All three should be called (fire-and-forget pattern)
     expect(sendFactsEmail).toHaveBeenCalledOnce();
     expect(sendWhatsAppFactsToAll).toHaveBeenCalledOnce();
+    expect(sendPushNotificationsToAll).toHaveBeenCalledOnce();
   });
 });
 

@@ -113,4 +113,18 @@ export default defineSchema({
     createdAt: v.number(),
     completedAt: v.optional(v.number()),
   }).index("by_user", ["userId", "createdAt"]),
+
+  pushSubscriptions: defineTable({
+    /** Better Auth user ID (string UUID) — matches threads.userId pattern */
+    userId: v.string(),
+    /** PushSubscription.endpoint */
+    endpoint: v.string(),
+    /** PushSubscription.keys.p256dh */
+    p256dh: v.string(),
+    /** PushSubscription.keys.auth */
+    auth: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_endpoint", ["endpoint"]),
 });

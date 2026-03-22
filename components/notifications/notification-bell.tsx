@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useConvexAuth } from "convex/react";
-import { Bell } from "lucide-react";
+import { Bell, BellOff } from "lucide-react";
 import type { Fact } from "@/lib/facts-agent";
 
 const STORAGE_KEY = "facts_last_seen";
 const POLL_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const PUSH_STORAGE_KEY = "push_subscribed";
 
 export function NotificationBell() {
   const { isAuthenticated } = useConvexAuth();
@@ -14,6 +15,9 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushSubscribed, setPushSubscribed] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   async function fetchFacts() {
@@ -36,6 +40,86 @@ export function NotificationBell() {
       // silently fail — non-critical feature
     } finally {
       setLoading(false);
+    }
+  }
+
+  // Detect push support and restore subscribed state from localStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const supported =
+      "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+    setPushSupported(supported);
+    if (supported) {
+      setPushSubscribed(localStorage.getItem(PUSH_STORAGE_KEY) === "true");
+    }
+  }, []);
+
+  async function handlePushToggle() {
+    if (pushLoading) return;
+    setPushLoading(true);
+    try {
+      if (pushSubscribed) {
+        await unsubscribePush();
+      } else {
+        await subscribePush();
+      }
+    } finally {
+      setPushLoading(false);
+    }
+  }
+
+  async function subscribePush() {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+
+      // Fetch VAPID public key from server
+      const keyRes = await fetch("/api/notifications/subscribe");
+      if (!keyRes.ok) return;
+      const { publicKey } = (await keyRes.json()) as { publicKey?: string };
+      if (!publicKey) return;
+
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") return;
+
+      const subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+
+      const sub = subscription.toJSON() as {
+        endpoint: string;
+        keys?: { p256dh?: string; auth?: string };
+      };
+
+      await fetch("/api/notifications/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sub),
+      });
+
+      localStorage.setItem(PUSH_STORAGE_KEY, "true");
+      setPushSubscribed(true);
+    } catch (err) {
+      console.error("[push] Subscribe failed:", err);
+    }
+  }
+
+  async function unsubscribePush() {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const subscription = await reg.pushManager.getSubscription();
+      if (subscription) {
+        await fetch("/api/notifications/subscribe", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint: subscription.endpoint }),
+        });
+        await subscription.unsubscribe();
+      }
+      localStorage.removeItem(PUSH_STORAGE_KEY);
+      setPushSubscribed(false);
+    } catch (err) {
+      console.error("[push] Unsubscribe failed:", err);
     }
   }
 
@@ -104,12 +188,29 @@ export function NotificationBell() {
               <p className="font-semibold text-sm">High-Yield Facts</p>
               <p className="text-xs text-muted-foreground">Refreshed every 2 hours</p>
             </div>
-            <button
-              onClick={fetchFacts}
-              className="text-xs text-blue-500 hover:text-blue-600 transition-colors"
-            >
-              Refresh
-            </button>
+            <div className="flex items-center gap-2">
+              {pushSupported && isAuthenticated && (
+                <button
+                  onClick={handlePushToggle}
+                  disabled={pushLoading}
+                  aria-label={pushSubscribed ? "Disable push notifications" : "Enable push notifications"}
+                  title={pushSubscribed ? "Turn off daily fact push" : "Get daily facts pushed to you"}
+                  className="p-1 rounded hover:bg-accent transition-colors disabled:opacity-50"
+                >
+                  {pushSubscribed ? (
+                    <BellOff className="h-3.5 w-3.5 text-blue-500" />
+                  ) : (
+                    <Bell className="h-3.5 w-3.5 text-muted-foreground" />
+                  )}
+                </button>
+              )}
+              <button
+                onClick={fetchFacts}
+                className="text-xs text-blue-500 hover:text-blue-600 transition-colors"
+              >
+                Refresh
+              </button>
+            </div>
           </div>
 
           {facts.length === 0 ? (
@@ -149,4 +250,12 @@ export function NotificationBell() {
       )}
     </div>
   );
+}
+
+/** Convert a base64url VAPID public key to a Uint8Array for PushManager.subscribe */
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
 }
