@@ -1,11 +1,19 @@
 /**
- * Simple SM-2-inspired spaced repetition engine.
- * Review state is persisted in localStorage (no schema changes needed).
+ * SM-2-inspired spaced repetition engine.
+ *
+ * Core algorithm is exported as pure functions for testing.
+ * Review state is now persisted in Convex (reviewCards table).
+ * localStorage-based functions are kept for backwards compatibility
+ * but the review page uses Convex-backed storage.
  *
  * Intervals (in days): 1 → 3 → 7 → 14 → 30  (capped)
  * Difficulty ratings: "again" resets to day 1, "hard" keeps interval,
  * "good" advances one step, "easy" advances two steps.
  */
+
+export const INTERVALS_DAYS = [1, 3, 7, 14, 30];
+
+export type Difficulty = "again" | "hard" | "good" | "easy";
 
 export interface ReviewCard {
   bookmarkId: string;
@@ -19,10 +27,70 @@ export interface ReviewCard {
   reviewCount: number;
 }
 
-const INTERVALS_DAYS = [1, 3, 7, 14, 30];
-const STORAGE_KEY = "ugent_review_cards";
+// ─── Pure algorithm functions (testable) ───────────────────────────────────
 
-export type Difficulty = "again" | "hard" | "good" | "easy";
+/**
+ * Calculate the next interval step given a difficulty rating.
+ */
+export function calculateNextStep(
+  currentStep: number,
+  difficulty: Difficulty
+): number {
+  switch (difficulty) {
+    case "again":
+      return 0;
+    case "hard":
+      return currentStep; // stay at current step
+    case "good":
+      return Math.min(currentStep + 1, INTERVALS_DAYS.length - 1);
+    case "easy":
+      return Math.min(currentStep + 2, INTERVALS_DAYS.length - 1);
+  }
+}
+
+/**
+ * Get the number of days until the next review for a given step.
+ */
+export function getIntervalDays(step: number): number {
+  return INTERVALS_DAYS[Math.min(step, INTERVALS_DAYS.length - 1)];
+}
+
+/**
+ * Calculate the due date (ms timestamp) given a step and a reference time.
+ */
+export function calculateDueAt(step: number, fromMs: number = Date.now()): number {
+  return fromMs + getIntervalDays(step) * 24 * 60 * 60 * 1000;
+}
+
+/**
+ * Filter and sort cards that are due for review.
+ */
+export function filterDueCards<T extends { dueAt: number }>(
+  cards: T[],
+  nowMs: number = Date.now()
+): T[] {
+  return cards
+    .filter((c) => c.dueAt <= nowMs)
+    .sort((a, b) => a.dueAt - b.dueAt);
+}
+
+/**
+ * Compute deck statistics.
+ */
+export function computeDeckStats<T extends { dueAt: number; reviewCount: number }>(
+  cards: T[],
+  nowMs: number = Date.now()
+): { due: number; total: number; reviewed: number } {
+  return {
+    due: cards.filter((c) => c.dueAt <= nowMs).length,
+    total: cards.length,
+    reviewed: cards.filter((c) => c.reviewCount > 0).length,
+  };
+}
+
+// ─── localStorage-based functions (legacy, kept for backwards compat) ──────
+
+const STORAGE_KEY = "ugent_review_cards";
 
 function daysFromNow(days: number): string {
   const d = new Date();
@@ -45,18 +113,12 @@ function saveCards(cards: Record<string, ReviewCard>) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
 }
 
-/**
- * Sync bookmarks from Convex with the local review deck.
- * New bookmarks get added with dueAt = now (immediately reviewable).
- * Deleted bookmarks get removed.
- */
 export function syncBookmarks(
   bookmarks: Array<{ _id: string; question: string; answer: string }>
 ): ReviewCard[] {
   const cards = loadCards();
   const bookmarkIds = new Set(bookmarks.map((b) => b._id));
 
-  // Add new bookmarks
   for (const bm of bookmarks) {
     if (!cards[bm._id]) {
       cards[bm._id] = {
@@ -68,13 +130,11 @@ export function syncBookmarks(
         reviewCount: 0,
       };
     } else {
-      // Update question/answer snapshot in case bookmark was re-created
       cards[bm._id].question = bm.question;
       cards[bm._id].answer = bm.answer;
     }
   }
 
-  // Remove cards whose bookmarks no longer exist
   for (const id of Object.keys(cards)) {
     if (!bookmarkIds.has(id)) {
       delete cards[id];
@@ -85,9 +145,6 @@ export function syncBookmarks(
   return Object.values(cards);
 }
 
-/**
- * Get cards that are due for review (dueAt <= now).
- */
 export function getDueCards(allCards: ReviewCard[]): ReviewCard[] {
   const now = new Date().toISOString();
   return allCards
@@ -95,33 +152,13 @@ export function getDueCards(allCards: ReviewCard[]): ReviewCard[] {
     .sort((a, b) => a.dueAt.localeCompare(b.dueAt));
 }
 
-/**
- * Rate a card and update its schedule.
- */
 export function rateCard(bookmarkId: string, difficulty: Difficulty): ReviewCard | null {
   const cards = loadCards();
   const card = cards[bookmarkId];
   if (!card) return null;
 
-  let nextStep = card.intervalStep;
-
-  switch (difficulty) {
-    case "again":
-      nextStep = 0;
-      break;
-    case "hard":
-      // stay at current step
-      break;
-    case "good":
-      nextStep = Math.min(nextStep + 1, INTERVALS_DAYS.length - 1);
-      break;
-    case "easy":
-      nextStep = Math.min(nextStep + 2, INTERVALS_DAYS.length - 1);
-      break;
-  }
-
-  card.intervalStep = nextStep;
-  card.dueAt = daysFromNow(INTERVALS_DAYS[nextStep]);
+  card.intervalStep = calculateNextStep(card.intervalStep, difficulty);
+  card.dueAt = daysFromNow(INTERVALS_DAYS[card.intervalStep]);
   card.reviewCount += 1;
 
   cards[bookmarkId] = card;
@@ -129,9 +166,6 @@ export function rateCard(bookmarkId: string, difficulty: Difficulty): ReviewCard
   return card;
 }
 
-/**
- * Get a summary of the deck state.
- */
 export function getDeckStats(allCards: ReviewCard[]) {
   const now = new Date().toISOString();
   const due = allCards.filter((c) => c.dueAt <= now).length;

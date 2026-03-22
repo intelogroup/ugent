@@ -69,6 +69,36 @@ export default defineSchema({
     .index("by_user", ["userId", "createdAt"])
     .index("by_user_message", ["userId", "messageId"]),
 
+  reviewCards: defineTable({
+    userId: v.string(), // Better Auth user ID
+    bookmarkId: v.id("bookmarks"),
+    /** Snapshot of Q&A for display */
+    question: v.string(),
+    answer: v.string(),
+    /** Timestamp (ms) when the card is next due for review */
+    dueAt: v.number(),
+    /** Current interval step index (0-based into [1,3,7,14,30] days) */
+    intervalStep: v.number(),
+    /** Total number of times reviewed */
+    reviewCount: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId", "dueAt"])
+    .index("by_user_bookmark", ["userId", "bookmarkId"]),
+
+  confidenceRatings: defineTable({
+    userId: v.string(), // Better Auth user ID
+    bookSlug: v.string(),
+    chapterNumber: v.number(),
+    /** 1-5 confidence scale */
+    rating: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user_chapter", ["userId", "bookSlug", "chapterNumber"])
+    .index("by_user", ["userId"]),
+
   jobs: defineTable({
     userId: v.id("users"),
     type: v.union(v.literal("research"), v.literal("digest")),

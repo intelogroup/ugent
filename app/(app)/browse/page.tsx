@@ -2,6 +2,9 @@
 
 import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useConvexAuth } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { ConfidenceRating, ConfidenceBadge } from "@/components/chapters/confidence-rating";
 import {
   Search,
   BookOpen,
@@ -109,8 +112,14 @@ const ORGAN_SYSTEMS: OrganSystem[] = [
 
 export default function BrowsePage() {
   const router = useRouter();
+  const { isAuthenticated } = useConvexAuth();
+  const confidenceRatings = useQuery(
+    api.confidenceRatings.listRatings,
+    isAuthenticated ? {} : "skip"
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSystem, setSelectedSystem] = useState<string | null>(null);
+  const [expandedChapter, setExpandedChapter] = useState<string | null>(null);
 
   const filteredBooks = useMemo(() => {
     const query = searchQuery.toLowerCase();
@@ -199,23 +208,64 @@ export default function BrowsePage() {
                 {book.book}
               </h2>
               <div className="space-y-1.5">
-                {book.chapters.map((ch) => (
-                  <button
-                    key={`${book.bookSlug}-${ch.number}`}
-                    onClick={() => startChatAbout(book.bookSlug, ch.title)}
-                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl bg-secondary/50 hover:bg-accent border border-transparent hover:border-border transition-all group text-left"
-                  >
-                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                      {ch.icon}
+                {book.chapters.map((ch) => {
+                  const chapterKey = `${book.bookSlug}:${ch.number}`;
+                  const rating = confidenceRatings?.[chapterKey];
+                  const isExpanded = expandedChapter === `${book.bookSlug}-${ch.number}`;
+
+                  return (
+                    <div key={`${book.bookSlug}-${ch.number}`} className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => startChatAbout(book.bookSlug, ch.title)}
+                          className="flex-1 flex items-center gap-3 px-3 py-3 rounded-xl bg-secondary/50 hover:bg-accent border border-transparent hover:border-border transition-all group text-left"
+                        >
+                          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                            {ch.icon}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium text-foreground truncate">
+                                Ch. {ch.number}: {ch.title}
+                              </p>
+                              <ConfidenceBadge rating={rating} />
+                            </div>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                        </button>
+                        <button
+                          onClick={() =>
+                            setExpandedChapter(
+                              isExpanded ? null : `${book.bookSlug}-${ch.number}`
+                            )
+                          }
+                          className="flex-shrink-0 p-2 rounded-lg hover:bg-secondary transition-colors"
+                          aria-label="Rate confidence"
+                          title="Rate your confidence"
+                        >
+                          <ConfidenceRating
+                            bookSlug={book.bookSlug}
+                            chapterNumber={ch.number}
+                            currentRating={rating}
+                            compact
+                          />
+                        </button>
+                      </div>
+                      {isExpanded && (
+                        <div className="ml-11 p-2 rounded-lg bg-secondary/30 animate-in slide-in-from-top-2 duration-200">
+                          <p className="text-xs text-muted-foreground mb-2">
+                            How confident are you with this chapter?
+                          </p>
+                          <ConfidenceRating
+                            bookSlug={book.bookSlug}
+                            chapterNumber={ch.number}
+                            currentRating={rating}
+                          />
+                        </div>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        Ch. {ch.number}: {ch.title}
-                      </p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                  </button>
-                ))}
+                  );
+                })}
               </div>
             </section>
           ))

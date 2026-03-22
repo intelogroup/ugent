@@ -17,11 +17,11 @@ Focus: build the full study loop for medical students — ask questions, get ans
 ## P1 — User Journey Completeness
 
 - [x] **Bookmark / save** — star a Q&A pair or chapter section to review later; stored in Convex per user
-- [ ] **Spaced repetition queue** — saved items surface as flashcard-style review prompts; simple interval logic only
+- [x] **Spaced repetition queue** — saved items surface as flashcard-style review prompts; simple interval logic only
 - [x] **Chapter outline navigator** — sidebar listing First Aid and Pathoma chapters; click to ask questions scoped to that chapter
 - [ ] **Daily fact push** — cron already sends facts via Telegram/WhatsApp; add opt-in to web notifications too
 - [x] **Chat history** — per-user conversation log; student can return to a prior session and continue
-- [ ] **Confidence rating** — after each answer, student taps "got it / unsure / wrong"; used to surface weak areas
+- [x] **Confidence rating** — after each answer, student taps "got it / unsure / wrong"; used to surface weak areas
 
 ---
 

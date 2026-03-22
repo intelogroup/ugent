@@ -8,6 +8,23 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
 }));
 
+// Mock convex/react — browse page now uses useQuery and useConvexAuth
+vi.mock("convex/react", () => ({
+  useQuery: () => ({}),
+  useMutation: () => vi.fn(),
+  useConvexAuth: () => ({ isAuthenticated: true, isLoading: false }),
+}));
+
+// Mock convex API
+vi.mock("@/convex/_generated/api", () => ({
+  api: {
+    confidenceRatings: {
+      setRating: "confidenceRatings:setRating",
+      listRatings: "confidenceRatings:listRatings",
+    },
+  },
+}));
+
 import BrowsePage from "@/app/(app)/browse/page";
 
 /** Get the organ-system filter chip (not a chapter button) by name. */
@@ -105,8 +122,11 @@ describe("BrowsePage", () => {
     const user = userEvent.setup();
     render(<BrowsePage />);
 
-    // Click on a Pathoma chapter
-    await user.click(screen.getByText(/Ch\. 8: Cardiac Pathology/).closest("button")!);
+    // Click on a Pathoma chapter — find the text, then the closest button ancestor
+    const chapterText = screen.getByText(/Ch\. 8: Cardiac Pathology/);
+    const chatButton = chapterText.closest("button");
+    expect(chatButton).not.toBeNull();
+    await user.click(chatButton!);
 
     expect(pushMock).toHaveBeenCalledWith(
       expect.stringContaining("/chat?prompt=")

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { useQuery, useConvexAuth } from "convex/react";
+import React, { useState, useCallback, useEffect } from "react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import {
@@ -13,68 +13,64 @@ import {
   ArrowLeft,
   Sparkles,
 } from "lucide-react";
-import {
-  syncBookmarks,
-  getDueCards,
-  rateCard,
-  getDeckStats,
-  type ReviewCard,
-  type Difficulty,
-} from "@/lib/spaced-repetition";
+
+type Difficulty = "again" | "hard" | "good" | "easy";
+
+const INTERVALS_DAYS = [1, 3, 7, 14, 30];
 
 export default function ReviewPage() {
   const router = useRouter();
   const { isAuthenticated } = useConvexAuth();
-  const bookmarks = useQuery(
-    api.bookmarks.listBookmarks,
-    isAuthenticated ? { limit: 200 } : "skip"
-  );
 
-  const [allCards, setAllCards] = useState<ReviewCard[]>([]);
-  const [dueCards, setDueCards] = useState<ReviewCard[]>([]);
+  // Sync bookmarks into review cards
+  const syncFromBookmarks = useMutation(api.reviewCards.syncFromBookmarks);
+  const rateCardMutation = useMutation(api.reviewCards.rateCard);
+
+  // Fetch Convex-backed data
+  const allCards = useQuery(api.reviewCards.listCards, isAuthenticated ? {} : "skip");
+  const dueCards = useQuery(api.reviewCards.listDueCards, isAuthenticated ? {} : "skip");
+  const stats = useQuery(api.reviewCards.getDeckStats, isAuthenticated ? {} : "skip");
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [sessionComplete, setSessionComplete] = useState(false);
+  const [synced, setSynced] = useState(false);
 
-  // Sync bookmarks into the local spaced-repetition deck
+  // Sync bookmarks on mount
   useEffect(() => {
-    if (!bookmarks) return;
-    const synced = syncBookmarks(
-      bookmarks.map((b: any) => ({
-        _id: b._id,
-        question: b.question,
-        answer: b.answer,
-      }))
-    );
-    setAllCards(synced);
-    const due = getDueCards(synced);
-    setDueCards(due);
-    if (due.length === 0) {
+    if (isAuthenticated && !synced) {
+      syncFromBookmarks({}).then(() => setSynced(true)).catch(() => setSynced(true));
+    }
+  }, [isAuthenticated, synced, syncFromBookmarks]);
+
+  // Detect session complete
+  useEffect(() => {
+    if (dueCards && dueCards.length === 0 && synced) {
       setSessionComplete(true);
     }
-  }, [bookmarks]);
+  }, [dueCards, synced]);
 
-  const currentCard = dueCards[currentIndex] ?? null;
-  const stats = getDeckStats(allCards);
+  const currentCard = dueCards?.[currentIndex] ?? null;
+  const deckStats = stats ?? { due: 0, total: 0, reviewed: 0 };
 
   const handleRate = useCallback(
-    (difficulty: Difficulty) => {
+    async (difficulty: Difficulty) => {
       if (!currentCard) return;
-      rateCard(currentCard.bookmarkId, difficulty);
+      await rateCardMutation({ cardId: currentCard._id, difficulty });
 
       const nextIndex = currentIndex + 1;
-      if (nextIndex >= dueCards.length) {
+      if (nextIndex >= (dueCards?.length ?? 0)) {
         setSessionComplete(true);
       } else {
         setCurrentIndex(nextIndex);
         setFlipped(false);
       }
     },
-    [currentCard, currentIndex, dueCards.length]
+    [currentCard, currentIndex, dueCards?.length, rateCardMutation]
   );
 
-  // Empty state — no bookmarks at all
-  if (bookmarks && bookmarks.length === 0) {
+  // Empty state — no cards at all
+  if (allCards && allCards.length === 0 && synced) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center px-6">
         <BookOpen className="h-14 w-14 text-muted-foreground opacity-30 mb-4" />
@@ -101,12 +97,12 @@ export default function ReviewPage() {
         </div>
         <h1 className="text-xl font-bold mb-2">All caught up!</h1>
         <p className="text-sm text-muted-foreground mb-2">
-          {stats.due === 0
+          {deckStats.due === 0
             ? "No cards are due for review right now."
-            : `${stats.due} card${stats.due !== 1 ? "s" : ""} remaining.`}
+            : `${deckStats.due} card${deckStats.due !== 1 ? "s" : ""} remaining.`}
         </p>
         <p className="text-xs text-muted-foreground mb-6">
-          {stats.total} total cards &middot; {stats.reviewed} reviewed at least once
+          {deckStats.total} total cards &middot; {deckStats.reviewed} reviewed at least once
         </p>
         <div className="flex gap-3">
           <button
@@ -117,21 +113,11 @@ export default function ReviewPage() {
           </button>
           <button
             onClick={() => {
-              // Re-check for due cards (in case time has passed)
-              const synced = syncBookmarks(
-                (bookmarks ?? []).map((b: any) => ({
-                  _id: b._id,
-                  question: b.question,
-                  answer: b.answer,
-                }))
-              );
-              const due = getDueCards(synced);
-              if (due.length > 0) {
-                setDueCards(due);
-                setCurrentIndex(0);
-                setFlipped(false);
-                setSessionComplete(false);
-              }
+              // Re-sync and check for new due cards
+              setSynced(false);
+              setCurrentIndex(0);
+              setFlipped(false);
+              setSessionComplete(false);
             }}
             className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
           >
@@ -172,7 +158,7 @@ export default function ReviewPage() {
           </div>
         </div>
         <div className="text-sm text-muted-foreground font-medium">
-          {currentIndex + 1} / {dueCards.length}
+          {currentIndex + 1} / {dueCards?.length ?? 0}
         </div>
       </div>
 
@@ -181,7 +167,7 @@ export default function ReviewPage() {
         <div
           className="h-full bg-blue-600 transition-all duration-300"
           style={{
-            width: `${((currentIndex) / dueCards.length) * 100}%`,
+            width: `${((currentIndex) / (dueCards?.length ?? 1)) * 100}%`,
           }}
         />
       </div>
@@ -245,7 +231,7 @@ export default function ReviewPage() {
             >
               <span className="text-sm font-semibold text-orange-600 dark:text-orange-400">Hard</span>
               <span className="text-[10px] text-orange-500/70">
-                {currentCard.intervalStep === 0 ? "1" : [1, 3, 7, 14, 30][currentCard.intervalStep]} day{currentCard.intervalStep > 0 ? "s" : ""}
+                {INTERVALS_DAYS[currentCard.intervalStep]} day{currentCard.intervalStep > 0 ? "s" : ""}
               </span>
             </button>
             <button
@@ -254,7 +240,7 @@ export default function ReviewPage() {
             >
               <span className="text-sm font-semibold text-green-600 dark:text-green-400">Good</span>
               <span className="text-[10px] text-green-500/70">
-                {[1, 3, 7, 14, 30][Math.min(currentCard.intervalStep + 1, 4)]} days
+                {INTERVALS_DAYS[Math.min(currentCard.intervalStep + 1, 4)]} days
               </span>
             </button>
             <button
@@ -263,7 +249,7 @@ export default function ReviewPage() {
             >
               <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">Easy</span>
               <span className="text-[10px] text-blue-500/70">
-                {[1, 3, 7, 14, 30][Math.min(currentCard.intervalStep + 2, 4)]} days
+                {INTERVALS_DAYS[Math.min(currentCard.intervalStep + 2, 4)]} days
               </span>
             </button>
           </div>
