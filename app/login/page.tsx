@@ -14,7 +14,7 @@ export default function LoginPage() {
       </div>
       <h1 className="text-2xl font-bold text-gray-900 mb-2">UGent MedBot</h1>
       <p className="text-gray-500 text-sm mb-8">Sign in to continue</p>
-      <EmailOtpForm onSuccess={() => router.push("/chat")} />
+      <EmailOtpForm onSuccess={() => router.push("/dashboard")} />
     </div>
   );
 }

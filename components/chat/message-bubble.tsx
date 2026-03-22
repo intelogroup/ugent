@@ -6,6 +6,7 @@ import { useState, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import ImageRenderer from '../image-renderer';
 import { cleanForSpeech } from '@/lib/clean-for-speech';
+import { SourceCitations, type SourceInfo } from './source-citations';
 
 interface MessageBubbleProps {
   message: Message;

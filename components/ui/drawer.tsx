@@ -1,7 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MessageSquare, Settings, Monitor, SquarePen } from "lucide-react";
+import { X, MessageSquare, Settings, Monitor, SquarePen, Home, Search, BookOpen } from "lucide-react";
 
 interface DrawerProps {
   isOpen: boolean;
@@ -10,6 +11,13 @@ interface DrawerProps {
 }
 
 export function Drawer({ isOpen, onClose, onNewChat }: DrawerProps) {
+  const router = useRouter();
+
+  const navigateTo = (path: string) => {
+    onClose();
+    router.push(path);
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -43,14 +51,30 @@ export function Drawer({ isOpen, onClose, onNewChat }: DrawerProps) {
             </div>
 
             <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
-              {/* New Chat */}
-              <button
-                onClick={onNewChat}
-                className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg transition-colors"
-              >
-                <SquarePen className="h-4 w-4" />
-                <span>New Chat</span>
-              </button>
+              {/* Navigation */}
+              <section className="space-y-1">
+                <button
+                  onClick={() => navigateTo("/dashboard")}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium hover:bg-accent rounded-lg transition-colors"
+                >
+                  <Home className="h-4 w-4 text-muted-foreground" />
+                  <span>Dashboard</span>
+                </button>
+                <button
+                  onClick={() => navigateTo("/browse")}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium hover:bg-accent rounded-lg transition-colors"
+                >
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <span>Browse Topics</span>
+                </button>
+                <button
+                  onClick={onNewChat}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg transition-colors"
+                >
+                  <SquarePen className="h-4 w-4" />
+                  <span>New Chat</span>
+                </button>
+              </section>
 
               {/* Chat History */}
               <section>

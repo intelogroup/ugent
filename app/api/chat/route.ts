@@ -56,6 +56,15 @@ export async function POST(req: Request) {
     // Strip scores before injecting into the prompt
     const cleanContext = context.map(({ score, ...chunk }) => chunk);
 
+    // Deduplicate sources for citation display (book + chapter pairs)
+    const sources = contextFound
+      ? Array.from(
+          new Map(
+            cleanContext.map((c) => [`${c.book}::${c.chapter}`, { book: c.book, chapter: c.chapter }])
+          ).values()
+        )
+      : [];
+
     const data = new StreamData();
     // appendMessageAnnotation attaches data to this specific message (readable via message.annotations)
     data.appendMessageAnnotation({
@@ -63,6 +72,7 @@ export async function POST(req: Request) {
       model_used: reason,
       top_score: topScore,
       images: imageResults.map(img => img.image_id),
+      sources,
     });
 
     const contextString = contextFound

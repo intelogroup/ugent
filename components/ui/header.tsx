@@ -1,6 +1,8 @@
 "use client";
 
-import { Menu, Bot, SquarePen } from "lucide-react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { Menu, Bot, SquarePen, Home, Search, MessageSquare } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { WhatsAppSubscribe } from "@/components/whatsapp/whatsapp-subscribe";
 
@@ -10,6 +12,8 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuClick, onNewChat }: HeaderProps) {
+  const pathname = usePathname();
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
       <div className="flex h-14 items-center justify-between px-4">
@@ -21,13 +25,47 @@ export function Header({ onMenuClick, onNewChat }: HeaderProps) {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <div className="flex items-center gap-2 font-bold text-lg tracking-tight">
+          <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg tracking-tight hover:opacity-80 transition-opacity">
             <Bot className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-            <span>UGent MedBot 3.5</span>
-          </div>
+            <span className="hidden sm:inline">UGent MedBot</span>
+          </Link>
         </div>
-        
-        <div className="flex items-center gap-1">
+
+        {/* Nav links */}
+        <nav className="flex items-center gap-1">
+          <Link
+            href="/dashboard"
+            className={`p-2 rounded-lg transition-colors ${
+              pathname === "/dashboard"
+                ? "bg-accent text-foreground"
+                : "hover:bg-accent text-muted-foreground"
+            }`}
+            aria-label="Dashboard"
+          >
+            <Home className="h-5 w-5" />
+          </Link>
+          <Link
+            href="/browse"
+            className={`p-2 rounded-lg transition-colors ${
+              pathname === "/browse"
+                ? "bg-accent text-foreground"
+                : "hover:bg-accent text-muted-foreground"
+            }`}
+            aria-label="Browse Topics"
+          >
+            <Search className="h-5 w-5" />
+          </Link>
+          <Link
+            href="/chat"
+            className={`p-2 rounded-lg transition-colors ${
+              pathname === "/chat"
+                ? "bg-accent text-foreground"
+                : "hover:bg-accent text-muted-foreground"
+            }`}
+            aria-label="Chat"
+          >
+            <MessageSquare className="h-5 w-5" />
+          </Link>
           <WhatsAppSubscribe />
           <NotificationBell />
           <button
@@ -37,7 +75,7 @@ export function Header({ onMenuClick, onNewChat }: HeaderProps) {
           >
             <SquarePen className="h-5 w-5" />
           </button>
-        </div>
+        </nav>
       </div>
     </header>
   );

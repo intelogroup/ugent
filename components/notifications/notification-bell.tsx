@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useConvexAuth } from "convex/react";
 import { Bell } from "lucide-react";
 import type { Fact } from "@/lib/facts-agent";
 
@@ -8,6 +9,7 @@ const STORAGE_KEY = "facts_last_seen";
 const POLL_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 export function NotificationBell() {
+  const { isAuthenticated } = useConvexAuth();
   const [facts, setFacts] = useState<Fact[]>([]);
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
@@ -37,11 +39,13 @@ export function NotificationBell() {
     }
   }
 
+  // Only poll /api/facts when authenticated to avoid 401 console spam
   useEffect(() => {
+    if (!isAuthenticated) return;
     fetchFacts();
     const id = setInterval(fetchFacts, POLL_INTERVAL);
     return () => clearInterval(id);
-  }, []);
+  }, [isAuthenticated]);
 
   // Close on outside click
   useEffect(() => {

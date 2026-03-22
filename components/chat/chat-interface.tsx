@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useChat } from 'ai/react';
 import { useQuery, useMutation } from 'convex/react';
 import { useConvexAuth } from 'convex/react';
+import { useSearchParams } from 'next/navigation';
 import { authClient } from '@/lib/auth-client';
 import { Bot, Sparkles } from 'lucide-react';
 import { MessageBubble } from './message-bubble';
@@ -22,8 +23,10 @@ export function ChatInterface() {
   const currentUser = useQuery(api.users.getCurrentUser);
   const getOrCreateThread = useMutation(api.threads.getOrCreateWebThread);
   const addMessage = useMutation(api.messages.addMessage);
+  const searchParams = useSearchParams();
 
   const [threadId, setThreadId] = useState<Id<"threads"> | null>(null);
+  const [initialPromptSent, setInitialPromptSent] = useState(false);
 
   // Create/get thread once user is known
   useEffect(() => {
@@ -68,6 +71,16 @@ export function ChatInterface() {
       });
     },
   });
+
+  // Auto-send prompt from URL query param (e.g., from browse page)
+  const promptParam = searchParams?.get("prompt");
+  useEffect(() => {
+    if (promptParam && threadId && !initialPromptSent && messages.length === 0) {
+      setInitialPromptSent(true);
+      addMessage({ threadId, role: "user", content: promptParam });
+      append({ role: "user", content: promptParam });
+    }
+  }, [promptParam, threadId, initialPromptSent, messages.length, addMessage, append]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
