@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     return Response.json({ ok: true });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("Unauthenticated")) {
+    if (msg.includes("Unauthenticated") || msg.includes("Unauthorized")) {
       return Response.json({ error: "Unauthenticated" }, { status: 401 });
     }
     console.error("[notifications/subscribe] Error:", msg);
@@ -60,7 +60,7 @@ export async function DELETE(req: Request) {
     return Response.json({ ok: true });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("Unauthenticated")) {
+    if (msg.includes("Unauthenticated") || msg.includes("Unauthorized")) {
       return Response.json({ error: "Unauthenticated" }, { status: 401 });
     }
     console.error("[notifications/subscribe] Delete error:", msg);
