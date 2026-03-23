@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu, Bot, SquarePen, Home, Search, MessageSquare, Layers, Clock, BookOpen, Sun, Moon } from "lucide-react";
+import { Menu, Bot, SquarePen, Home, Search, MessageSquare, Layers, Clock, BookOpen, Sun, Moon, BarChart2, Link2, BrainCircuit } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { WhatsAppSubscribe } from "@/components/whatsapp/whatsapp-subscribe";
+import { BotConnectModal } from "@/components/onboarding/bot-connect-modal";
 import { useTheme } from "@/components/theme-provider";
 
 interface HeaderProps {
@@ -16,6 +18,7 @@ interface HeaderProps {
 export function Header({ onMenuClick, onNewChat, onChapterNavToggle }: HeaderProps) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
+  const [showBotConnect, setShowBotConnect] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
@@ -91,6 +94,17 @@ export function Header({ onMenuClick, onNewChat, onChapterNavToggle }: HeaderPro
           >
             <Layers className="h-5 w-5" />
           </Link>
+          <Link
+            href="/quiz"
+            className={`p-2 rounded-lg transition-colors ${
+              pathname === "/quiz"
+                ? "bg-accent text-foreground"
+                : "hover:bg-accent text-muted-foreground"
+            }`}
+            aria-label="Quick Quiz"
+          >
+            <BrainCircuit className="h-5 w-5" />
+          </Link>
           {onChapterNavToggle && (
             <button
               onClick={onChapterNavToggle}
@@ -100,6 +114,25 @@ export function Header({ onMenuClick, onNewChat, onChapterNavToggle }: HeaderPro
               <BookOpen className="h-5 w-5" />
             </button>
           )}
+          <Link
+            href="/progress"
+            className={`p-2 rounded-lg transition-colors ${
+              pathname === "/progress"
+                ? "bg-accent text-foreground"
+                : "hover:bg-accent text-muted-foreground"
+            }`}
+            aria-label="Progress Heatmap"
+          >
+            <BarChart2 className="h-5 w-5" />
+          </Link>
+          <button
+            onClick={() => setShowBotConnect(true)}
+            className="p-2 hover:bg-accent rounded-lg transition-colors text-muted-foreground"
+            aria-label="Connect Bot"
+            title="Connect Telegram or WhatsApp"
+          >
+            <Link2 className="h-5 w-5" />
+          </button>
           <WhatsAppSubscribe />
           <NotificationBell />
           <button
@@ -118,6 +151,7 @@ export function Header({ onMenuClick, onNewChat, onChapterNavToggle }: HeaderPro
           </button>
         </nav>
       </div>
+      {showBotConnect && <BotConnectModal onClose={() => setShowBotConnect(false)} />}
     </header>
   );
 }
