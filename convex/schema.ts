@@ -26,6 +26,14 @@ export default defineSchema({
     used: v.boolean(),
   }).index("by_token", ["token"]),
 
+  whatsappConnectTokens: defineTable({
+    /** Better Auth user ID (string UUID) */
+    userId: v.string(),
+    token: v.string(),
+    expiresAt: v.number(),
+    used: v.boolean(),
+  }).index("by_token", ["token"]),
+
   threads: defineTable({
     // Better Auth user ID (string UUID) — custom users table is Phase 3
     userId: v.string(),

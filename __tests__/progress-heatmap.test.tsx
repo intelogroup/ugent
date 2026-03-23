@@ -14,27 +14,40 @@ vi.mock("@/convex/_generated/api", () => ({
     progressHeatmap: {
       getHeatmapData: "progressHeatmap:getHeatmapData",
     },
+    users: {
+      getCurrentUser: "users:getCurrentUser",
+    },
   },
 }));
 
 import { useQuery } from "convex/react";
 
+const MOCK_USER = { _id: "user123" };
+
+/** Helper: mock useQuery so getCurrentUser returns a user and getHeatmapData returns heatmapData */
+function mockHeatmapQuery(heatmapData: unknown) {
+  vi.mocked(useQuery).mockImplementation((query: unknown) => {
+    if (query === "users:getCurrentUser") return MOCK_USER;
+    return heatmapData;
+  });
+}
+
 describe("ProgressHeatmap", () => {
   it("shows loading skeletons while data is undefined", () => {
-    vi.mocked(useQuery).mockReturnValue(undefined);
+    mockHeatmapQuery(undefined);
     const { container } = render(<ProgressHeatmap />);
     const skeletons = container.querySelectorAll(".animate-pulse");
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it("shows empty state when data is empty array", () => {
-    vi.mocked(useQuery).mockReturnValue([]);
+    mockHeatmapQuery([]);
     render(<ProgressHeatmap />);
     expect(screen.getByText(/No study activity yet/i)).toBeInTheDocument();
   });
 
   it("renders chapter cells when data has entries", () => {
-    vi.mocked(useQuery).mockReturnValue([
+    mockHeatmapQuery([
       {
         bookSlug: "pathoma",
         bookName: "Pathoma (2021)",
@@ -60,7 +73,7 @@ describe("ProgressHeatmap", () => {
   });
 
   it("renders confidence rating label when present", () => {
-    vi.mocked(useQuery).mockReturnValue([
+    mockHeatmapQuery([
       {
         bookSlug: "pathoma",
         bookName: "Pathoma (2021)",
@@ -76,7 +89,7 @@ describe("ProgressHeatmap", () => {
   });
 
   it("does not render confidence label when rating is null", () => {
-    vi.mocked(useQuery).mockReturnValue([
+    mockHeatmapQuery([
       {
         bookSlug: "pathoma",
         bookName: "Pathoma (2021)",
@@ -93,7 +106,7 @@ describe("ProgressHeatmap", () => {
   });
 
   it("renders the heat legend", () => {
-    vi.mocked(useQuery).mockReturnValue([
+    mockHeatmapQuery([
       {
         bookSlug: "pathoma",
         bookName: "Pathoma (2021)",

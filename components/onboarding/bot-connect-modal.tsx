@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import QRCode from "react-qr-code";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { MessageCircle, Send, X, CheckCircle2, RefreshCw } from "lucide-react";
 
@@ -20,7 +20,8 @@ export function BotConnectModal({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ConnectResult | null>(null);
 
-  const status = useQuery(api.botOnboarding.getConnectionStatus);
+  const currentUser = useQuery(api.users.getCurrentUser);
+  const status = useQuery(api.botOnboarding.getConnectionStatus, currentUser?._id ? {} : "skip");
   const genTelegram = useMutation(api.botOnboarding.generateTelegramToken);
   const genWhatsapp = useMutation(api.botOnboarding.generateWhatsappToken);
 

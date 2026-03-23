@@ -2,6 +2,16 @@ import { openai } from '@ai-sdk/openai';
 import { streamText, StreamData } from 'ai';
 import { getContext, getImages } from '@/lib/pinecone';
 import { isAuthenticated } from '@/lib/auth-server';
+import { z } from 'zod';
+
+const messageSchema = z.object({
+  role: z.enum(['user', 'assistant', 'system']),
+  content: z.union([z.string(), z.array(z.object({ type: z.string(), text: z.string().optional() }).passthrough())]),
+});
+
+const chatRequestSchema = z.object({
+  messages: z.array(messageSchema).min(1),
+});
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -36,7 +46,15 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { messages } = await req.json();
+    const body = await req.json();
+    const parsed = chatRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      return new Response(JSON.stringify({ error: 'Invalid request', details: parsed.error.flatten() }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    const { messages } = parsed.data;
 
     const lastMessage = messages[messages.length - 1];
     const userQuery = typeof lastMessage.content === 'string'

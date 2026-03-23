@@ -22,6 +22,7 @@ import {
   FlaskConical,
   Activity,
   ChevronRight,
+  BrainCircuit,
 } from "lucide-react";
 
 // ─── Chapter data from pinecone.ts ──────────────────────────────────────────
@@ -147,6 +148,12 @@ export default function BrowsePage() {
     router.push(`/chat?prompt=${prompt}`);
   };
 
+  const startQuizAbout = (bookSlug: string, chapterTitle: string, chapterNumber: number) => {
+    router.push(
+      `/quiz?topic=${encodeURIComponent(chapterTitle)}&book=${bookSlug}&chapter=${chapterNumber}`
+    );
+  };
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Search header */}
@@ -232,6 +239,14 @@ export default function BrowsePage() {
                             </div>
                           </div>
                           <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                        </button>
+                        <button
+                          onClick={() => startQuizAbout(book.bookSlug, ch.title, ch.number)}
+                          className="flex-shrink-0 p-2 rounded-lg hover:bg-secondary transition-colors"
+                          aria-label="Quick quiz"
+                          title="Quick quiz"
+                        >
+                          <BrainCircuit className="h-4 w-4 text-muted-foreground" />
                         </button>
                         <button
                           onClick={() =>

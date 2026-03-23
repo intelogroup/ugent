@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useQuery } from "convex/react";
+import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { BOOKS } from "@/lib/chapters";
 
@@ -117,7 +117,8 @@ function HeatLegend() {
 }
 
 export function ProgressHeatmap() {
-  const data = useQuery(api.progressHeatmap.getHeatmapData);
+  const currentUser = useQuery(api.users.getCurrentUser);
+  const data = useQuery(api.progressHeatmap.getHeatmapData, currentUser?._id ? {} : "skip");
   const [activeBook, setActiveBook] = useState<string>(BOOKS[0].slug);
 
   if (data === undefined) {

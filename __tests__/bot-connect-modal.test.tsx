@@ -23,6 +23,9 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@/convex/_generated/api", () => ({
   api: {
+    users: {
+      getCurrentUser: "users:getCurrentUser",
+    },
     botOnboarding: {
       generateTelegramToken: "botOnboarding:generateTelegramToken",
       generateWhatsappToken: "botOnboarding:generateWhatsappToken",
@@ -33,15 +36,20 @@ vi.mock("@/convex/_generated/api", () => ({
 
 import { useQuery } from "convex/react";
 
+const mockCurrentUser = { _id: "user-123" };
+
 describe("BotConnectModal", () => {
   const onClose = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useQuery).mockReturnValue({
-      telegramConnected: false,
-      telegramUsername: null,
-      whatsappConnected: false,
+    vi.mocked(useQuery).mockImplementation((key: string) => {
+      if (key === "users:getCurrentUser") return mockCurrentUser;
+      return {
+        telegramConnected: false,
+        telegramUsername: null,
+        whatsappConnected: false,
+      };
     });
   });
 
@@ -70,10 +78,13 @@ describe("BotConnectModal", () => {
   });
 
   it("shows connected state when telegramConnected is true", () => {
-    vi.mocked(useQuery).mockReturnValue({
-      telegramConnected: true,
-      telegramUsername: "testuser",
-      whatsappConnected: false,
+    vi.mocked(useQuery).mockImplementation((key: string) => {
+      if (key === "users:getCurrentUser") return mockCurrentUser;
+      return {
+        telegramConnected: true,
+        telegramUsername: "testuser",
+        whatsappConnected: false,
+      };
     });
     render(<BotConnectModal onClose={onClose} />);
     expect(screen.getByText(/Connected.*testuser/i)).toBeInTheDocument();

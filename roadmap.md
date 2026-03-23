@@ -27,9 +27,9 @@ Focus: build the full study loop for medical students — ask questions, get ans
 
 ## P2 — Quality of Life
 
-- [ ] **Quick quiz mode** — generate 5 MCQs from a selected chapter; Convex action calls LLM with chapter context
-- [ ] **Progress heatmap** — which chapters/topics has the student engaged with most; simple counts, no ML
-- [ ] **WhatsApp / Telegram onboarding link** — connect existing bot delivery to web account with QR code
+- [x] **Quick quiz mode** — generate 5 MCQs from a selected chapter; Convex action calls LLM with chapter context
+- [x] **Progress heatmap** — which chapters/topics has the student engaged with most; simple counts, no ML
+- [x] **WhatsApp / Telegram onboarding link** — connect existing bot delivery to web account with QR code
 - [x] **Dark mode** — long study sessions; wire up Tailwind dark class toggle
 
 ---
