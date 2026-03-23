@@ -1,4 +1,9 @@
+import { createHmac } from 'crypto';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+
+function makeSignature(secret: string, body: string) {
+  return 'sha256=' + createHmac('sha256', secret).update(body).digest('hex');
+}
 
 const originalEnv = process.env;
 
@@ -38,15 +43,24 @@ describe('GET /api/whatsapp/webhook — verification', () => {
 });
 
 describe('POST /api/whatsapp/webhook — incoming messages', () => {
+  const SECRET = 'test-app-secret';
+
+  beforeEach(() => {
+    process.env = { ...originalEnv, WHATSAPP_APP_SECRET: SECRET };
+  });
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
   it('returns 200 for valid message payload', async () => {
     const { POST } = await import('@/app/api/whatsapp/webhook/route');
-    const body = {
+    const bodyStr = JSON.stringify({
       entry: [{ changes: [{ value: { messages: [{ from: '15551234567', text: { body: 'Hello' } }] } }] }],
-    };
+    });
     const req = new Request('http://localhost/api/whatsapp/webhook', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json', 'x-hub-signature-256': makeSignature(SECRET, bodyStr) },
+      body: bodyStr,
     });
     const res = await POST(req);
     expect(res.status).toBe(200);
@@ -54,10 +68,11 @@ describe('POST /api/whatsapp/webhook — incoming messages', () => {
 
   it('returns 200 for malformed JSON (no retry)', async () => {
     const { POST } = await import('@/app/api/whatsapp/webhook/route');
+    const bodyStr = 'not-json';
     const req = new Request('http://localhost/api/whatsapp/webhook', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: 'not-json',
+      headers: { 'Content-Type': 'application/json', 'x-hub-signature-256': makeSignature(SECRET, bodyStr) },
+      body: bodyStr,
     });
     const res = await POST(req);
     expect(res.status).toBe(200);
@@ -65,13 +80,35 @@ describe('POST /api/whatsapp/webhook — incoming messages', () => {
 
   it('returns 200 when entry has no messages', async () => {
     const { POST } = await import('@/app/api/whatsapp/webhook/route');
-    const body = { entry: [{ changes: [{ value: {} }] }] };
+    const bodyStr = JSON.stringify({ entry: [{ changes: [{ value: {} }] }] });
     const req = new Request('http://localhost/api/whatsapp/webhook', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json', 'x-hub-signature-256': makeSignature(SECRET, bodyStr) },
+      body: bodyStr,
     });
     const res = await POST(req);
     expect(res.status).toBe(200);
+  });
+
+  it('returns 401 when signature is missing', async () => {
+    const { POST } = await import('@/app/api/whatsapp/webhook/route');
+    const req = new Request('http://localhost/api/whatsapp/webhook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 401 when signature is invalid', async () => {
+    const { POST } = await import('@/app/api/whatsapp/webhook/route');
+    const req = new Request('http://localhost/api/whatsapp/webhook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-hub-signature-256': 'sha256=badhash00000000000000000000000000000000000000000000000000000000' },
+      body: '{}',
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(401);
   });
 });
