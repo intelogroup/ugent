@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { useAuth } from "@workos-inc/authkit-nextjs/components";
 import { api } from "@/convex/_generated/api";
 import { AuthErrorBoundary } from "@/components/auth/auth-error-boundary";
+import { BotConnectModal } from "@/components/onboarding/bot-connect-modal";
 import {
   MessageSquare,
   Search,
@@ -16,6 +17,7 @@ import {
   ArrowRight,
   Bot,
   Bookmark,
+  Send,
 } from "lucide-react";
 
 const MEDICAL_FACTS = [
@@ -67,6 +69,11 @@ function DashboardContent() {
     api.bookmarks.listBookmarks,
     currentUser?._id ? { limit: 3 } : "skip"
   );
+  const [showBotModal, setShowBotModal] = useState(false);
+  const botStatus = useQuery(
+    api.botOnboarding.getConnectionStatus,
+    currentUser?._id ? {} : "skip"
+  );
 
   const dailyFact = getDailyFact();
 
@@ -115,6 +122,33 @@ function DashboardContent() {
             <span className="text-sm font-medium">Browse Topics</span>
           </button>
         </div>
+
+        {/* Connect Bot card */}
+        <button
+          onClick={() => setShowBotModal(true)}
+          className="w-full flex items-center justify-between p-3 rounded-xl bg-secondary/50 hover:bg-accent border border-transparent hover:border-border transition-all"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950 flex items-center justify-center">
+              <Send className="h-4 w-4 text-blue-500" />
+            </div>
+            <div className="text-left">
+              {botStatus?.telegramConnected ? (
+                <>
+                  <p className="text-xs font-medium text-foreground">Telegram connected</p>
+                  {botStatus.telegramUsername && (
+                    <p className="text-[10px] text-muted-foreground">@{botStatus.telegramUsername}</p>
+                  )}
+                </>
+              ) : (
+                <p className="text-xs font-medium text-foreground">Connect Telegram</p>
+              )}
+            </div>
+          </div>
+          <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+        </button>
+
+        {showBotModal && <BotConnectModal onClose={() => setShowBotModal(false)} />}
 
         {/* Daily fact */}
         <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border border-blue-100 dark:border-blue-900 p-4 space-y-2">
