@@ -13,7 +13,7 @@ interface State {
 }
 
 /**
- * Error boundary that catches Convex auth/query errors (401, "Unauthenticated")
+ * Error boundary that catches auth/query errors (401, "Unauthenticated", session expiry)
  * and redirects to /login instead of crashing.
  */
 export class AuthErrorBoundary extends Component<Props, State> {
