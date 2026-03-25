@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import QRCode from "react-qr-code";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -56,11 +57,12 @@ export function BotConnectModal({ onClose }: { onClose: () => void }) {
       : result.waLink
     : null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] overflow-y-auto bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
+      <div className="flex min-h-full items-center justify-center p-4">
       <div
         className="relative bg-background border rounded-2xl shadow-2xl p-6 w-96 flex flex-col gap-4"
         onClick={(e) => e.stopPropagation()}
@@ -185,6 +187,8 @@ export function BotConnectModal({ onClose }: { onClose: () => void }) {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }

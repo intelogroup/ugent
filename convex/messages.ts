@@ -42,6 +42,53 @@ export const addMessage = mutation({
   },
 });
 
+/**
+ * Add a message from the bot webhook — no user auth required, uses webhookSecret.
+ */
+export const addBotMessage = mutation({
+  args: {
+    threadId: v.id("threads"),
+    role: v.union(v.literal("user"), v.literal("assistant")),
+    content: v.string(),
+    webhookSecret: v.string(),
+  },
+  handler: async (ctx, { threadId, role, content, webhookSecret }) => {
+    if (webhookSecret !== process.env.TELEGRAM_WEBHOOK_SECRET) {
+      throw new Error("Unauthorized");
+    }
+    const msgId = await ctx.db.insert("messages", {
+      threadId,
+      role,
+      content,
+      createdAt: Date.now(),
+    });
+    await ctx.db.patch(threadId, { updatedAt: Date.now() });
+    return msgId;
+  },
+});
+
+/**
+ * Get recent messages for a thread (for bot conversation history).
+ * Uses webhookSecret for auth instead of user JWT.
+ */
+export const getRecentBotMessages = query({
+  args: {
+    threadId: v.id("threads"),
+    limit: v.optional(v.number()),
+    webhookSecret: v.string(),
+  },
+  handler: async (ctx, { threadId, limit, webhookSecret }) => {
+    if (webhookSecret !== process.env.TELEGRAM_WEBHOOK_SECRET) {
+      throw new Error("Unauthorized");
+    }
+    return await ctx.db
+      .query("messages")
+      .withIndex("by_thread", (q) => q.eq("threadId", threadId))
+      .order("asc")
+      .take(limit ?? 10);
+  },
+});
+
 export const listByThread = query({
   args: { threadId: v.id("threads") },
   handler: async (ctx, { threadId }) => {

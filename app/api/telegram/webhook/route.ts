@@ -1,5 +1,6 @@
 /**
  * Telegram webhook — receives messages and replies using the RAG pipeline.
+ * Persists conversations to Convex and handles bot onboarding (/start <token>).
  *
  * Setup:
  *   1. Create a bot via @BotFather → get TELEGRAM_BOT_TOKEN
@@ -10,8 +11,10 @@
 
 import { openai } from '@ai-sdk/openai';
 import { generateText } from 'ai';
+import { ConvexHttpClient } from 'convex/browser';
 import { getContext } from '@/lib/pinecone';
 import { sendTelegramMessage } from '@/lib/telegram';
+import { api } from '@/convex/_generated/api';
 
 const STRONG_CONTEXT_THRESHOLD = 0.60;
 
@@ -20,6 +23,12 @@ function selectModel(topScore: number) {
     return { model: openai('gpt-5.4'), reason: 'strong-context' };
   }
   return { model: openai('gpt-5.2'), reason: 'weak-context' };
+}
+
+function getConvexClient() {
+  const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!url) return null;
+  return new ConvexHttpClient(url);
 }
 
 export async function POST(req: Request) {
@@ -37,9 +46,67 @@ export async function POST(req: Request) {
   }
 
   const chatId: number = message.chat.id;
+  const telegramId = String(chatId);
   const userQuery: string = message.text;
+  const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET!;
+
+  // Handle /start <token> for bot onboarding
+  if (userQuery.startsWith('/start')) {
+    const token = userQuery.split(' ')[1]?.trim();
+    if (token && /^\d{6}$/.test(token)) {
+      try {
+        const convex = getConvexClient();
+        if (convex) {
+          const result = await convex.mutation(api.botOnboarding.consumeTelegramToken, {
+            token,
+            telegramId,
+            telegramUsername: message.from?.username,
+            webhookSecret,
+          });
+          const replies: Record<string, string> = {
+            ok: '✅ Your Telegram account is now connected! You can chat here and your conversations will sync.',
+            invalid: '❌ Invalid token. Please generate a new one from the web app.',
+            expired: '⏰ Token expired. Please generate a new one from the web app.',
+            used: '⚠️ Token already used. You may already be connected.',
+          };
+          await sendTelegramMessage(chatId, replies[result.status] ?? '❌ Something went wrong.');
+        } else {
+          await sendTelegramMessage(chatId, 'Welcome to UGent! Ask me any USMLE Step 1 question.');
+        }
+      } catch (error) {
+        console.error('[telegram] /start error:', error);
+        await sendTelegramMessage(chatId, 'Welcome to UGent! Ask me any USMLE Step 1 question.');
+      }
+      return new Response('OK', { status: 200 });
+    }
+
+    // /start with no token — generic welcome
+    await sendTelegramMessage(chatId, 'Welcome to UGent! 🩺 Ask me any USMLE Step 1 question.');
+    return new Response('OK', { status: 200 });
+  }
 
   try {
+    const convex = getConvexClient();
+
+    // Get or create a Telegram thread for this chat
+    let threadId: string | null = null;
+    let priorMessages: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+    if (convex) {
+      threadId = await convex.mutation(api.threads.getOrCreateTelegramThread, {
+        telegramId,
+        webhookSecret,
+      });
+
+      // Fetch recent history for context continuity (last 6 turns)
+      const recent = await convex.query(api.messages.getRecentBotMessages, {
+        threadId: threadId as any,
+        limit: 12,
+        webhookSecret,
+      });
+      priorMessages = recent.map((m: any) => ({ role: m.role, content: m.content }));
+    }
+
+    // RAG retrieval
     const context = await getContext(userQuery, undefined, true);
     const topScore = (context[0] as any)?.score ?? 0;
     const contextFound = context.length > 0;
@@ -70,9 +137,26 @@ Instructions:
       model,
       messages: [
         { role: 'system', content: systemPrompt },
+        ...priorMessages,
         { role: 'user', content: userQuery },
       ],
     });
+
+    // Persist to Convex
+    if (convex && threadId) {
+      await convex.mutation(api.messages.addBotMessage, {
+        threadId: threadId as any,
+        role: 'user',
+        content: userQuery,
+        webhookSecret,
+      });
+      await convex.mutation(api.messages.addBotMessage, {
+        threadId: threadId as any,
+        role: 'assistant',
+        content: text,
+        webhookSecret,
+      });
+    }
 
     await sendTelegramMessage(chatId, text);
   } catch (error) {

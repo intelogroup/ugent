@@ -146,7 +146,12 @@ export async function generateFacts(): Promise<Fact[]> {
     return getFallbackFacts();
   }
 
-  const openai = getOpenAIClient();
+  let openai: OpenAI;
+  try {
+    openai = getOpenAIClient();
+  } catch {
+    return getFallbackFacts();
+  }
 
   const contextSection = [
     textbookBlock ? `=== TEXTBOOK KNOWLEDGE BASE ===\n${textbookBlock}` : '',
@@ -155,14 +160,15 @@ export async function generateFacts(): Promise<Fact[]> {
     .filter(Boolean)
     .join('\n\n');
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    temperature: 0.4,
-    response_format: { type: 'json_object' },
-    messages: [
-      {
-        role: 'system',
-        content: `You are a senior USMLE Step 1 tutor. You have access to:
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      temperature: 0.4,
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content: `You are a senior USMLE Step 1 tutor. You have access to:
 1. Authoritative textbook excerpts (First Aid, Pathoma)
 2. Real-time student community intelligence (Reddit, forums, ECFMG news)
 
@@ -178,18 +184,17 @@ Rules:
 - Return JSON: { "facts": [ { "topic": string, "fact": string, "source": string, "category": string } ] }
 - "source" references the book/chapter or "Community Insight — [platform]"
 - "category" must be one of: Cardiology, Pulmonology, Nephrology, GI, Endocrinology, Hematology, Infectious Disease, Neurology, Oncology, Immunology, Pharmacology, Pathology`,
-      },
-      {
-        role: 'user',
-        content: `Generate 5 high-yield USMLE Step 1 facts using the following context:\n\n${contextSection}`,
-      },
-    ],
-  });
+        },
+        {
+          role: 'user',
+          content: `Generate 5 high-yield USMLE Step 1 facts using the following context:\n\n${contextSection}`,
+        },
+      ],
+    });
 
-  const content = response.choices[0]?.message?.content;
-  if (!content) return getFallbackFacts();
+    const content = response.choices[0]?.message?.content;
+    if (!content) return getFallbackFacts();
 
-  try {
     const parsed = JSON.parse(content) as {
       facts: Array<{ topic: string; fact: string; source: string; category: string }>;
     };

@@ -20,3 +20,18 @@ If a requested change conflicts with scope.md, say so and stop.
 
 ## Test Requirement
 Run `npm test` — all 37 tests must pass. No regressions allowed.
+
+## Deploy Configuration (configured by /setup-deploy)
+- Platform: Vercel
+- Production URL: https://ugent-phi.vercel.app
+- Deploy workflow: auto-deploy on push to main
+- Deploy status command: vercel ls --prod
+- Merge method: merge
+- Project type: web app
+- Post-deploy health check: https://ugent-phi.vercel.app
+
+### Custom deploy hooks
+- Pre-merge: npm test
+- Deploy trigger: automatic on push to main
+- Deploy status: vercel ls --prod
+- Health check: https://ugent-phi.vercel.app

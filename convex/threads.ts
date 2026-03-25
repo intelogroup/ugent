@@ -84,6 +84,39 @@ export const listUserThreads = query({
   },
 });
 
+/**
+ * Get or create a Telegram thread for a given Telegram chat ID.
+ * Called from the bot webhook — uses webhookSecret for auth instead of user JWT.
+ */
+export const getOrCreateTelegramThread = mutation({
+  args: {
+    telegramId: v.string(),
+    webhookSecret: v.string(),
+  },
+  handler: async (ctx, { telegramId, webhookSecret }) => {
+    if (webhookSecret !== process.env.TELEGRAM_WEBHOOK_SECRET) {
+      throw new Error("Unauthorized");
+    }
+
+    const existing = await ctx.db
+      .query("threads")
+      .withIndex("by_user_platform", (q) =>
+        q.eq("userId", telegramId).eq("platform", "telegram")
+      )
+      .filter((q) => q.eq(q.field("archivedAt"), undefined))
+      .first();
+
+    if (existing) return existing._id;
+
+    return await ctx.db.insert("threads", {
+      userId: telegramId,
+      platform: "telegram",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  },
+});
+
 export const listRecentThreadsWithPreview = query({
   args: { userId: v.string(), limit: v.optional(v.number()) },
   handler: async (ctx, { userId, limit }) => {
