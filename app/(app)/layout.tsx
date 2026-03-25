@@ -1,28 +1,27 @@
-"use client";
+import { withAuth } from '@workos-inc/authkit-nextjs';
+import { redirect } from 'next/navigation';
+import { fetchMutation } from 'convex/nextjs';
+import { api } from '@/convex/_generated/api';
+import { AppLayout } from '@/components/ui/app-layout';
 
-import { useConvexAuth } from "convex/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { AppLayout } from "@/components/ui/app-layout";
-
-export default function AppRouteLayout({
+export default async function AppRouteLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, isLoading } = useConvexAuth();
-  const router = useRouter();
+  const { user, accessToken } = await withAuth();
+  if (!user) redirect('/login');
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace("/login");
-    }
-  }, [isAuthenticated, isLoading, router]);
-
-  // Show nothing while auth state is loading or redirecting
-  if (isLoading || !isAuthenticated) {
-    return null;
-  }
+  // Sync user into Convex DB on every protected page load (idempotent)
+  // accessToken is the WorkOS JWT required for ctx.auth.getUserIdentity() inside Convex
+  await fetchMutation(
+    api.auth.storeUser,
+    {
+      name: user.firstName ?? undefined,
+      email: user.email ?? undefined,
+    },
+    { token: accessToken }
+  );
 
   return <AppLayout>{children}</AppLayout>;
 }
