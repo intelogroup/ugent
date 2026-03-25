@@ -1,14 +1,12 @@
-import { convexBetterAuthNextJs } from "@convex-dev/better-auth/nextjs";
+import { withAuth, getAuth } from '@workos-inc/authkit-nextjs';
 
-export const {
-  handler,
-  preloadAuthQuery,
-  isAuthenticated,
-  getToken,
-  fetchAuthQuery,
-  fetchAuthMutation,
-  fetchAuthAction,
-} = convexBetterAuthNextJs({
-  convexUrl: process.env.NEXT_PUBLIC_CONVEX_URL!,
-  convexSiteUrl: process.env.NEXT_PUBLIC_CONVEX_SITE_URL!,
-});
+export { withAuth, getAuth };
+
+// Helper: get authenticated user or return 401 response
+export async function requireAuth() {
+  const { user } = await withAuth();
+  if (!user) {
+    return { user: null, response: new Response('Unauthorized', { status: 401 }) };
+  }
+  return { user, response: null };
+}

@@ -5,7 +5,6 @@ import { useChat } from 'ai/react';
 import { useQuery, useMutation } from 'convex/react';
 import { useConvexAuth } from 'convex/react';
 import { useSearchParams } from 'next/navigation';
-import { authClient } from '@/lib/auth-client';
 import { Bot, Sparkles, BookOpen } from 'lucide-react';
 import { MessageBubble } from './message-bubble';
 import { InputBar } from './input-bar';
@@ -95,13 +94,8 @@ export function ChatInterface({
     annotations: m.imageAnnotations,
   })) ?? [];
 
-  // crossDomainClient stores session in localStorage — pass it to the API route
-  // so Next.js can authenticate via the Convex token endpoint.
-  const authHeaders = { 'Better-Auth-Cookie': (authClient as any).getCookie?.() ?? '' };
-
   const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat({
     api: '/api/chat',
-    headers: authHeaders,
     initialMessages,
     onFinish: async (message) => {
       if (!threadId) return;
