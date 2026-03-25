@@ -6,7 +6,11 @@ import userEvent from "@testing-library/user-event";
 const mockUseQuery = vi.fn();
 vi.mock("convex/react", () => ({
   useQuery: (...args: any[]) => mockUseQuery(...args),
-  useConvexAuth: () => ({ isAuthenticated: true, isLoading: false }),
+}));
+
+// Mock WorkOS auth
+vi.mock("@workos-inc/authkit-nextjs/components", () => ({
+  useAuth: () => ({ user: { firstName: "Test" } }),
 }));
 
 // Mock Convex API

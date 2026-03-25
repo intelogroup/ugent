@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import QRCode from "react-qr-code";
-import { useMutation, useQuery, useConvexAuth } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { MessageCircle, Send, X, CheckCircle2, RefreshCw } from "lucide-react";
 

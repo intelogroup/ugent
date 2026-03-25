@@ -1,13 +1,10 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { authComponent } from "./auth";
 
 async function getAuthUserId(ctx: any): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new Error("Unauthenticated");
-  const authUser = await authComponent.getAuthUser(ctx);
-  if (!authUser) throw new Error("Unauthenticated");
-  return authUser._id;
+  return identity.tokenIdentifier;
 }
 
 /**
@@ -66,14 +63,11 @@ export const getRating = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
     try {
-      const authUser = await authComponent.getAuthUser(ctx);
-      if (!authUser) return null;
-
       return await ctx.db
         .query("confidenceRatings")
         .withIndex("by_user_chapter", (q) =>
           q
-            .eq("userId", authUser._id)
+            .eq("userId", identity.tokenIdentifier)
             .eq("bookSlug", bookSlug)
             .eq("chapterNumber", chapterNumber)
         )
@@ -94,12 +88,9 @@ export const listRatings = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return {};
     try {
-      const authUser = await authComponent.getAuthUser(ctx);
-      if (!authUser) return {};
-
       const ratings = await ctx.db
         .query("confidenceRatings")
-        .withIndex("by_user", (q) => q.eq("userId", authUser._id))
+        .withIndex("by_user", (q) => q.eq("userId", identity.tokenIdentifier))
         .collect();
 
       const map: Record<string, number> = {};
@@ -122,12 +113,9 @@ export const getAverageConfidence = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
     try {
-      const authUser = await authComponent.getAuthUser(ctx);
-      if (!authUser) return null;
-
       const ratings = await ctx.db
         .query("confidenceRatings")
-        .withIndex("by_user", (q) => q.eq("userId", authUser._id))
+        .withIndex("by_user", (q) => q.eq("userId", identity.tokenIdentifier))
         .collect();
 
       if (ratings.length === 0) return null;

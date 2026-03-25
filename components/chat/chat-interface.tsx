@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useChat } from 'ai/react';
 import { useQuery, useMutation } from 'convex/react';
-import { useConvexAuth } from 'convex/react';
+import { useAuth } from '@workos-inc/authkit-nextjs/components';
 import { useSearchParams } from 'next/navigation';
 import { Bot, Sparkles, BookOpen } from 'lucide-react';
 import { MessageBubble } from './message-bubble';
@@ -36,7 +36,8 @@ export function ChatInterface({
   chapterScope,
   onThreadCreated,
 }: ChatInterfaceProps = {}) {
-  const { isAuthenticated } = useConvexAuth();
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
   const currentUser = useQuery(api.users.getCurrentUser);
   const getOrCreateThread = useMutation(api.threads.getOrCreateWebThread);
   const createChapterThread = useMutation(api.threads.createChapterThread);

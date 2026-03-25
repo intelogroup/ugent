@@ -28,7 +28,7 @@ export default defineSchema({
     .index("by_stripe_customer", ["stripeCustomerId"]),
 
   telegramConnectTokens: defineTable({
-    userId: v.id("users"),
+    userId: v.string(), // WorkOS tokenIdentifier
     token: v.string(),
     expiresAt: v.number(),
     used: v.boolean(),

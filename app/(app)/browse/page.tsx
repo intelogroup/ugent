@@ -2,7 +2,8 @@
 
 import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery, useConvexAuth } from "convex/react";
+import { useQuery } from "convex/react";
+import { useAuth } from "@workos-inc/authkit-nextjs/components";
 import { api } from "@/convex/_generated/api";
 import { ConfidenceRating, ConfidenceBadge } from "@/components/chapters/confidence-rating";
 import {
@@ -113,7 +114,8 @@ const ORGAN_SYSTEMS: OrganSystem[] = [
 
 export default function BrowsePage() {
   const router = useRouter();
-  const { isAuthenticated } = useConvexAuth();
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
   const confidenceRatings = useQuery(
     api.confidenceRatings.listRatings,
     isAuthenticated ? {} : "skip"

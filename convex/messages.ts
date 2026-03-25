@@ -1,6 +1,5 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { authComponent } from "./auth";
 
 /**
  * Verify the caller owns the thread. Throws if unauthenticated or thread
@@ -9,22 +8,18 @@ import { authComponent } from "./auth";
 async function assertThreadOwner(
   ctx: any,
   threadId: any,
-): Promise<{ thread: any; authUser: any }> {
+): Promise<{ thread: any }> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new Error("Unauthenticated");
-
-  const authUser = await authComponent.getAuthUser(ctx);
-  if (!authUser) throw new Error("Unauthenticated");
 
   const thread = await ctx.db.get(threadId);
   if (!thread) throw new Error("Thread not found");
 
-  // thread.userId is a Better Auth user ID (string UUID)
-  if (thread.userId !== authUser._id) {
+  if (thread.userId !== identity.tokenIdentifier) {
     throw new Error("Not authorized to access this thread");
   }
 
-  return { thread, authUser };
+  return { thread };
 }
 
 export const addMessage = mutation({

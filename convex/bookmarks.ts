@@ -1,13 +1,10 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { authComponent } from "./auth";
 
 async function getAuthUserId(ctx: any): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new Error("Unauthenticated");
-  const authUser = await authComponent.getAuthUser(ctx);
-  if (!authUser) throw new Error("Unauthenticated");
-  return authUser._id;
+  return identity.tokenIdentifier;
 }
 
 /**
@@ -73,13 +70,10 @@ export const isBookmarked = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return false;
     try {
-      const authUser = await authComponent.getAuthUser(ctx);
-      if (!authUser) return false;
-
       const existing = await ctx.db
         .query("bookmarks")
         .withIndex("by_user_message", (q) =>
-          q.eq("userId", authUser._id).eq("messageId", messageId)
+          q.eq("userId", identity.tokenIdentifier).eq("messageId", messageId)
         )
         .first();
 
@@ -99,12 +93,9 @@ export const listBookmarks = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
     try {
-      const authUser = await authComponent.getAuthUser(ctx);
-      if (!authUser) return [];
-
       return await ctx.db
         .query("bookmarks")
-        .withIndex("by_user", (q) => q.eq("userId", authUser._id))
+        .withIndex("by_user", (q) => q.eq("userId", identity.tokenIdentifier))
         .order("desc")
         .take(limit ?? 50);
     } catch {

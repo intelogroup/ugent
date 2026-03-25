@@ -3,7 +3,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
-import { useConvexAuth } from "convex/react";
+import { useAuth } from "@workos-inc/authkit-nextjs/components";
 import { api } from "@/convex/_generated/api";
 import { AuthErrorBoundary } from "@/components/auth/auth-error-boundary";
 import {
@@ -55,7 +55,9 @@ function formatTimeAgo(timestamp: number): string {
 
 function DashboardContent() {
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
+  const authLoading = false;
   const currentUser = useQuery(api.users.getCurrentUser);
   const recentThreads = useQuery(
     api.threads.listRecentThreadsWithPreview,

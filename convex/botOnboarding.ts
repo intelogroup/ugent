@@ -11,7 +11,6 @@
  */
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { authComponent } from "./auth";
 
 const TOKEN_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
@@ -22,9 +21,7 @@ function randomSixDigit(): string {
 async function getAuthUserId(ctx: any): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new Error("Unauthenticated");
-  const authUser = await authComponent.getAuthUser(ctx);
-  if (!authUser) throw new Error("Unauthenticated");
-  return authUser._id;
+  return identity.tokenIdentifier;
 }
 
 // ─── Telegram ────────────────────────────────────────────────────────────────
@@ -55,7 +52,7 @@ export const generateTelegramToken = mutation({
     const expiresAt = Date.now() + TOKEN_TTL_MS;
 
     await ctx.db.insert("telegramConnectTokens", {
-      userId: userId as any,
+      userId,
       token,
       expiresAt,
       used: false,
@@ -98,10 +95,10 @@ export const consumeTelegramToken = mutation({
     // Mark used
     await ctx.db.patch(record._id, { used: true });
 
-    // Find the users row that matches this Better Auth ID
+    // Find the users row that matches this tokenIdentifier
     const userRow = await ctx.db
       .query("users")
-      .withIndex("by_auth_id", (q) => q.eq("authId", record.userId as unknown as string))
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", record.userId))
       .first();
 
     if (userRow) {
@@ -185,7 +182,7 @@ export const consumeWhatsappToken = mutation({
 
     const userRow = await ctx.db
       .query("users")
-      .withIndex("by_auth_id", (q) => q.eq("authId", record.userId))
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", record.userId))
       .first();
 
     if (userRow) {
@@ -205,17 +202,9 @@ export const getConnectionStatus = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
 
-    let authUser: { _id: string } | null = null;
-    try {
-      authUser = await authComponent.getAuthUser(ctx);
-    } catch {
-      return null;
-    }
-    if (!authUser) return null;
-
     const userRow = await ctx.db
       .query("users")
-      .withIndex("by_auth_id", (q) => q.eq("authId", authUser!._id))
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
       .first();
 
     return {

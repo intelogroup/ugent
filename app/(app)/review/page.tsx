@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from "react";
-import { useQuery, useMutation, useConvexAuth } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
+import { useAuth } from "@workos-inc/authkit-nextjs/components";
 import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import {
@@ -20,7 +21,8 @@ const INTERVALS_DAYS = [1, 3, 7, 14, 30];
 
 export default function ReviewPage() {
   const router = useRouter();
-  const { isAuthenticated } = useConvexAuth();
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
 
   // Sync bookmarks into review cards
   const syncFromBookmarks = useMutation(api.reviewCards.syncFromBookmarks);

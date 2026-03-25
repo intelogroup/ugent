@@ -8,11 +8,15 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
 }));
 
-// Mock convex/react — browse page now uses useQuery and useConvexAuth
+// Mock convex/react
 vi.mock("convex/react", () => ({
   useQuery: () => ({}),
   useMutation: () => vi.fn(),
-  useConvexAuth: () => ({ isAuthenticated: true, isLoading: false }),
+}));
+
+// Mock WorkOS auth
+vi.mock("@workos-inc/authkit-nextjs/components", () => ({
+  useAuth: () => ({ user: { firstName: "Test" } }),
 }));
 
 // Mock convex API

@@ -8,11 +8,15 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }))
 
-// Mock convex/react so NotificationBell's useConvexAuth doesn't require a provider
+// Mock convex/react
 vi.mock('convex/react', () => ({
-  useConvexAuth: () => ({ isAuthenticated: true, isLoading: false }),
   useQuery: () => undefined,
   useMutation: () => vi.fn(),
+}))
+
+// Mock WorkOS auth so NotificationBell's useAuth doesn't require a provider
+vi.mock('@workos-inc/authkit-nextjs/components', () => ({
+  useAuth: () => ({ user: { firstName: 'Test' } }),
 }))
 
 describe('Header Component', () => {

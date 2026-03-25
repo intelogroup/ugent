@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useConvexAuth } from "convex/react";
+import { useAuth } from "@workos-inc/authkit-nextjs/components";
 import { Bell, BellOff } from "lucide-react";
 import type { Fact } from "@/lib/facts-agent";
 
@@ -10,7 +10,8 @@ const POLL_INTERVAL = 5 * 60 * 1000; // 5 minutes
 const PUSH_STORAGE_KEY = "push_subscribed";
 
 export function NotificationBell() {
-  const { isAuthenticated } = useConvexAuth();
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
   const [facts, setFacts] = useState<Fact[]>([]);
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);

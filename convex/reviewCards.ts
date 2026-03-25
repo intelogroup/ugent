@@ -1,13 +1,10 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { authComponent } from "./auth";
 
 async function getAuthUserId(ctx: any): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new Error("Unauthenticated");
-  const authUser = await authComponent.getAuthUser(ctx);
-  if (!authUser) throw new Error("Unauthenticated");
-  return authUser._id;
+  return identity.tokenIdentifier;
 }
 
 const INTERVALS_DAYS = [1, 3, 7, 14, 30];
@@ -87,11 +84,9 @@ export const listCards = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
     try {
-      const authUser = await authComponent.getAuthUser(ctx);
-      if (!authUser) return [];
       return await ctx.db
         .query("reviewCards")
-        .withIndex("by_user", (q) => q.eq("userId", authUser._id))
+        .withIndex("by_user", (q) => q.eq("userId", identity.tokenIdentifier))
         .collect();
     } catch {
       return [];
@@ -108,12 +103,10 @@ export const listDueCards = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
     try {
-      const authUser = await authComponent.getAuthUser(ctx);
-      if (!authUser) return [];
       const now = Date.now();
       const cards = await ctx.db
         .query("reviewCards")
-        .withIndex("by_user", (q) => q.eq("userId", authUser._id))
+        .withIndex("by_user", (q) => q.eq("userId", identity.tokenIdentifier))
         .collect();
       return cards.filter((c) => c.dueAt <= now).sort((a, b) => a.dueAt - b.dueAt);
     } catch {
@@ -180,12 +173,10 @@ export const getDeckStats = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return { due: 0, total: 0, reviewed: 0 };
     try {
-      const authUser = await authComponent.getAuthUser(ctx);
-      if (!authUser) return { due: 0, total: 0, reviewed: 0 };
       const now = Date.now();
       const cards = await ctx.db
         .query("reviewCards")
-        .withIndex("by_user", (q) => q.eq("userId", authUser._id))
+        .withIndex("by_user", (q) => q.eq("userId", identity.tokenIdentifier))
         .collect();
       return {
         due: cards.filter((c) => c.dueAt <= now).length,

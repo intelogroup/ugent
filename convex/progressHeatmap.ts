@@ -1,5 +1,4 @@
 import { query } from "./_generated/server";
-import { authComponent } from "./auth";
 import { BOOKS } from "../lib/chapters";
 
 /**
@@ -17,15 +16,7 @@ export const getHeatmapData = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
 
-    let authUser: { _id: string } | null = null;
-    try {
-      authUser = await authComponent.getAuthUser(ctx);
-    } catch {
-      return [];
-    }
-    if (!authUser) return [];
-
-    const userId = authUser._id;
+    const userId = identity.tokenIdentifier;
 
     // Fetch all threads for the user that have a chapterScope
     const allThreads = await ctx.db

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { useQuery } from "convex/react";
-import { useConvexAuth } from "convex/react";
+import { useAuth } from "@workos-inc/authkit-nextjs/components";
 import { api } from "@/convex/_generated/api";
 import { X, MessageSquare, Settings, Monitor, SquarePen, Home, Search, BookOpen, Layers, ChevronDown, ChevronRight, Bot, Clock, BrainCircuit } from "lucide-react";
 
@@ -72,7 +72,8 @@ function formatTimeAgo(timestamp: number): string {
 
 export function Drawer({ isOpen, onClose, onNewChat }: DrawerProps) {
   const router = useRouter();
-  const { isAuthenticated } = useConvexAuth();
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
   const currentUser = useQuery(api.users.getCurrentUser);
   const recentThreads = useQuery(
     api.threads.listRecentThreadsWithPreview,
