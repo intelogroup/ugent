@@ -4,6 +4,7 @@ import "./globals.css";
 import { ConvexClientProvider } from "@/lib/convex";
 import { ServiceWorkerRegistrar } from "@/components/ServiceWorkerRegistrar";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AuthKitProvider } from "@workos-inc/authkit-nextjs/components";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,12 +21,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ConvexClientProvider>
-          <ThemeProvider>
-            <ServiceWorkerRegistrar />
-            {children}
-          </ThemeProvider>
-        </ConvexClientProvider>
+        <AuthKitProvider>
+          <ConvexClientProvider>
+            <ThemeProvider>
+              <ServiceWorkerRegistrar />
+              {children}
+            </ThemeProvider>
+          </ConvexClientProvider>
+        </AuthKitProvider>
       </body>
     </html>
   );
