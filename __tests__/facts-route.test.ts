@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('@/lib/auth-server', () => ({
-  isAuthenticated: vi.fn(),
+vi.mock('@workos-inc/authkit-nextjs', () => ({
+  withAuth: vi.fn(),
 }));
 
 vi.mock('@/lib/facts-agent', () => ({
@@ -12,7 +12,7 @@ vi.mock('next/cache', () => ({
   unstable_cache: (_fn: unknown, _key: unknown, _opts: unknown) => _fn,
 }));
 
-import { isAuthenticated } from '@/lib/auth-server';
+import { withAuth } from '@workos-inc/authkit-nextjs';
 import { generateFacts } from '@/lib/facts-agent';
 
 describe('GET /api/facts', () => {
@@ -21,7 +21,7 @@ describe('GET /api/facts', () => {
   });
 
   it('returns 401 when unauthenticated', async () => {
-    vi.mocked(isAuthenticated).mockResolvedValue(false);
+    vi.mocked(withAuth).mockResolvedValue({ user: null, accessToken: null } as any);
     vi.resetModules();
     const { GET } = await import('@/app/api/facts/route');
     const res = await GET();
@@ -31,7 +31,7 @@ describe('GET /api/facts', () => {
   });
 
   it('returns facts when authenticated', async () => {
-    vi.mocked(isAuthenticated).mockResolvedValue(true);
+    vi.mocked(withAuth).mockResolvedValue({ user: { email: 'test@example.com' }, accessToken: 'tok' } as any);
     vi.mocked(generateFacts).mockResolvedValue(['Fact A', 'Fact B'] as any);
     vi.resetModules();
     const { GET } = await import('@/app/api/facts/route');
@@ -42,7 +42,7 @@ describe('GET /api/facts', () => {
   });
 
   it('returns 500 when fact generation throws', async () => {
-    vi.mocked(isAuthenticated).mockResolvedValue(true);
+    vi.mocked(withAuth).mockResolvedValue({ user: { email: 'test@example.com' }, accessToken: 'tok' } as any);
     vi.mocked(generateFacts).mockRejectedValue(new Error('AI error'));
     vi.resetModules();
     const { GET } = await import('@/app/api/facts/route');

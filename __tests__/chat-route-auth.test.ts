@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('@/lib/auth-server', () => ({
-  isAuthenticated: vi.fn(),
+vi.mock('@workos-inc/authkit-nextjs', () => ({
+  withAuth: vi.fn(),
 }));
 
 vi.mock('@/lib/pinecone', () => ({
@@ -21,7 +21,7 @@ vi.mock('ai', () => ({
   },
 }));
 
-import { isAuthenticated } from '@/lib/auth-server';
+import { withAuth } from '@workos-inc/authkit-nextjs';
 import { getContext, getImages } from '@/lib/pinecone';
 import { streamText } from 'ai';
 
@@ -38,7 +38,7 @@ describe('POST /api/chat', () => {
     });
 
   it('returns 401 when unauthenticated', async () => {
-    vi.mocked(isAuthenticated).mockResolvedValue(false);
+    vi.mocked(withAuth).mockResolvedValue({ user: null, accessToken: null } as any);
     vi.resetModules();
     const { POST } = await import('@/app/api/chat/route');
     const res = await POST(makeRequest());
@@ -48,7 +48,7 @@ describe('POST /api/chat', () => {
   });
 
   it('does not return 401 when authenticated (passes auth check)', async () => {
-    vi.mocked(isAuthenticated).mockResolvedValue(true);
+    vi.mocked(withAuth).mockResolvedValue({ user: { email: 'test@example.com' }, accessToken: 'tok' } as any);
     vi.mocked(getContext).mockResolvedValue([]);
     vi.mocked(getImages).mockResolvedValue([]);
     vi.mocked(streamText).mockReturnValue({

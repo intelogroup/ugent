@@ -1,6 +1,6 @@
 import { unstable_cache } from 'next/cache';
 import { generateFacts } from '@/lib/facts-agent';
-import { isAuthenticated } from '@/lib/auth-server';
+import { withAuth } from '@workos-inc/authkit-nextjs';
 
 // Cache facts for 2 hours; invalidated by cron via revalidateTag('facts')
 const getCachedFacts = unstable_cache(generateFacts, ['high-yield-facts'], {
@@ -9,7 +9,8 @@ const getCachedFacts = unstable_cache(generateFacts, ['high-yield-facts'], {
 });
 
 export async function GET() {
-  if (!(await isAuthenticated())) {
+  const { user } = await withAuth();
+  if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

@@ -8,7 +8,8 @@
  * Returns the VAPID public key on GET so the client can call
  * PushManager.subscribe() with the correct applicationServerKey.
  */
-import { fetchAuthMutation } from "@/lib/auth-server";
+import { withAuth } from "@workos-inc/authkit-nextjs";
+import { fetchMutation, fetchQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 
 export async function GET() {
@@ -20,6 +21,11 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const { user, accessToken } = await withAuth();
+  if (!user) {
+    return Response.json({ error: "Unauthenticated" }, { status: 401 });
+  }
+
   const body = (await req.json()) as {
     endpoint?: string;
     keys?: { p256dh?: string; auth?: string };
@@ -31,39 +37,46 @@ export async function POST(req: Request) {
   }
 
   try {
-    await fetchAuthMutation(req, api.pushSubscriptions.saveSubscription, {
-      endpoint,
-      p256dh: keys.p256dh,
-      auth: keys.auth,
-    });
+    const convexUser = await fetchQuery(api.auth.getByEmail, { email: user.email! }, { token: accessToken });
+    if (!convexUser) {
+      return Response.json({ error: "User not found" }, { status: 404 });
+    }
+    await fetchMutation(
+      api.pushSubscriptions.saveSubscription,
+      { userId: convexUser._id, endpoint, p256dh: keys.p256dh, auth: keys.auth },
+      { token: accessToken }
+    );
     return Response.json({ ok: true });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("Unauthenticated") || msg.includes("Unauthorized")) {
-      return Response.json({ error: "Unauthenticated" }, { status: 401 });
-    }
-    console.error("[notifications/subscribe] Error:", msg);
+    console.error("[notifications/subscribe] Error:", err);
     return Response.json({ error: "Failed to save subscription" }, { status: 500 });
   }
 }
 
 export async function DELETE(req: Request) {
+  const { user, accessToken } = await withAuth();
+  if (!user) {
+    return Response.json({ error: "Unauthenticated" }, { status: 401 });
+  }
+
   const body = (await req.json()) as { endpoint?: string };
   if (!body.endpoint) {
     return Response.json({ error: "endpoint required" }, { status: 400 });
   }
 
   try {
-    await fetchAuthMutation(req, api.pushSubscriptions.removeSubscription, {
-      endpoint: body.endpoint,
-    });
+    const convexUser = await fetchQuery(api.auth.getByEmail, { email: user.email! }, { token: accessToken });
+    if (!convexUser) {
+      return Response.json({ error: "User not found" }, { status: 404 });
+    }
+    await fetchMutation(
+      api.pushSubscriptions.removeSubscription,
+      { userId: convexUser._id, endpoint: body.endpoint },
+      { token: accessToken }
+    );
     return Response.json({ ok: true });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("Unauthenticated") || msg.includes("Unauthorized")) {
-      return Response.json({ error: "Unauthenticated" }, { status: 401 });
-    }
-    console.error("[notifications/subscribe] Delete error:", msg);
+    console.error("[notifications/subscribe] Delete error:", err);
     return Response.json({ error: "Failed to remove subscription" }, { status: 500 });
   }
 }

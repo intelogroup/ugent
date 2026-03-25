@@ -35,7 +35,7 @@ export default defineSchema({
   }).index("by_token", ["token"]),
 
   whatsappConnectTokens: defineTable({
-    /** Better Auth user ID (string UUID) */
+    /** Convex user document ID for the whatsapp user */
     userId: v.string(),
     token: v.string(),
     expiresAt: v.number(),
@@ -43,7 +43,7 @@ export default defineSchema({
   }).index("by_token", ["token"]),
 
   threads: defineTable({
-    // Better Auth user ID (string UUID) — custom users table is Phase 3
+    // WorkOS tokenIdentifier for web users; platform-specific ID for telegram/whatsapp
     userId: v.string(),
     platform: v.union(
       v.literal("web"),
@@ -74,7 +74,7 @@ export default defineSchema({
   }).index("by_thread", ["threadId", "createdAt"]),
 
   bookmarks: defineTable({
-    userId: v.string(), // Better Auth user ID
+    userId: v.string(), // WorkOS tokenIdentifier
     messageId: v.id("messages"),
     threadId: v.id("threads"),
     /** Snapshot of the Q&A pair so bookmarks remain useful if thread is deleted */
@@ -86,7 +86,7 @@ export default defineSchema({
     .index("by_user_message", ["userId", "messageId"]),
 
   reviewCards: defineTable({
-    userId: v.string(), // Better Auth user ID
+    userId: v.string(), // WorkOS tokenIdentifier
     bookmarkId: v.id("bookmarks"),
     /** Snapshot of Q&A for display */
     question: v.string(),
@@ -104,7 +104,7 @@ export default defineSchema({
     .index("by_user_bookmark", ["userId", "bookmarkId"]),
 
   confidenceRatings: defineTable({
-    userId: v.string(), // Better Auth user ID
+    userId: v.string(), // WorkOS tokenIdentifier
     bookSlug: v.string(),
     chapterNumber: v.number(),
     /** 1-5 confidence scale */
@@ -131,8 +131,8 @@ export default defineSchema({
   }).index("by_user", ["userId", "createdAt"]),
 
   pushSubscriptions: defineTable({
-    /** Better Auth user ID (string UUID) — matches threads.userId pattern */
-    userId: v.string(),
+    /** Convex user document ID */
+    userId: v.id("users"),
     /** PushSubscription.endpoint */
     endpoint: v.string(),
     /** PushSubscription.keys.p256dh */

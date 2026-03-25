@@ -1,13 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock Convex auth server helpers — these run server-side with a deploy key
-vi.mock('@/lib/auth-server', () => ({
-  fetchAuthMutation: vi.fn(),
+vi.mock('@workos-inc/authkit-nextjs', () => ({
+  withAuth: vi.fn(),
 }));
 
-// Mock the generated Convex API so imports resolve in test env
+vi.mock('convex/nextjs', () => ({
+  fetchMutation: vi.fn(),
+  fetchQuery: vi.fn(),
+}));
+
 vi.mock('@/convex/_generated/api', () => ({
   api: {
+    auth: { getByEmail: 'auth:getByEmail' },
     pushSubscriptions: {
       saveSubscription: 'pushSubscriptions:saveSubscription',
       removeSubscription: 'pushSubscriptions:removeSubscription',
@@ -15,8 +19,12 @@ vi.mock('@/convex/_generated/api', () => ({
   },
 }));
 
+import { withAuth } from '@workos-inc/authkit-nextjs';
+import { fetchMutation, fetchQuery } from 'convex/nextjs';
 import { GET, POST, DELETE } from '@/app/api/notifications/subscribe/route';
-import { fetchAuthMutation } from '@/lib/auth-server';
+
+const AUTHED = { user: { email: 'test@example.com' }, accessToken: 'tok' };
+const CONVEX_USER = { _id: 'users:abc123', email: 'test@example.com' };
 
 const VALID_SUB = {
   endpoint: 'https://fcm.googleapis.com/fcm/send/abc123',
@@ -32,10 +40,6 @@ function makeRequest(method: string, body?: unknown): Request {
 }
 
 describe('GET /api/notifications/subscribe', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it('returns 503 when VAPID_PUBLIC_KEY is not set', async () => {
     delete process.env.VAPID_PUBLIC_KEY;
     const res = await GET();
@@ -57,7 +61,15 @@ describe('GET /api/notifications/subscribe', () => {
 describe('POST /api/notifications/subscribe', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(fetchAuthMutation).mockResolvedValue(undefined as any);
+    vi.mocked(withAuth).mockResolvedValue(AUTHED as any);
+    vi.mocked(fetchQuery).mockResolvedValue(CONVEX_USER as any);
+    vi.mocked(fetchMutation).mockResolvedValue(undefined as any);
+  });
+
+  it('returns 401 when unauthenticated', async () => {
+    vi.mocked(withAuth).mockResolvedValue({ user: null, accessToken: null } as any);
+    const res = await POST(makeRequest('POST', VALID_SUB));
+    expect(res.status).toBe(401);
   });
 
   it('returns 400 when endpoint is missing', async () => {
@@ -70,22 +82,22 @@ describe('POST /api/notifications/subscribe', () => {
     expect(res.status).toBe(400);
   });
 
-  it('returns 200 and calls fetchAuthMutation on valid subscription', async () => {
+  it('returns 404 when user not found in Convex', async () => {
+    vi.mocked(fetchQuery).mockResolvedValue(null as any);
+    const res = await POST(makeRequest('POST', VALID_SUB));
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 200 and calls fetchMutation on valid subscription', async () => {
     const res = await POST(makeRequest('POST', VALID_SUB));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);
-    expect(fetchAuthMutation).toHaveBeenCalledOnce();
+    expect(fetchMutation).toHaveBeenCalledOnce();
   });
 
-  it('returns 401 when fetchAuthMutation throws Unauthenticated', async () => {
-    vi.mocked(fetchAuthMutation).mockRejectedValue(new Error('Unauthenticated'));
-    const res = await POST(makeRequest('POST', VALID_SUB));
-    expect(res.status).toBe(401);
-  });
-
-  it('returns 500 when fetchAuthMutation throws other error', async () => {
-    vi.mocked(fetchAuthMutation).mockRejectedValue(new Error('Database error'));
+  it('returns 500 when fetchMutation throws', async () => {
+    vi.mocked(fetchMutation).mockRejectedValue(new Error('Database error'));
     const res = await POST(makeRequest('POST', VALID_SUB));
     expect(res.status).toBe(500);
   });
@@ -94,7 +106,15 @@ describe('POST /api/notifications/subscribe', () => {
 describe('DELETE /api/notifications/subscribe', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(fetchAuthMutation).mockResolvedValue(undefined as any);
+    vi.mocked(withAuth).mockResolvedValue(AUTHED as any);
+    vi.mocked(fetchQuery).mockResolvedValue(CONVEX_USER as any);
+    vi.mocked(fetchMutation).mockResolvedValue(undefined as any);
+  });
+
+  it('returns 401 when unauthenticated', async () => {
+    vi.mocked(withAuth).mockResolvedValue({ user: null, accessToken: null } as any);
+    const res = await DELETE(makeRequest('DELETE', { endpoint: VALID_SUB.endpoint }));
+    expect(res.status).toBe(401);
   });
 
   it('returns 400 when endpoint is missing', async () => {
@@ -102,17 +122,17 @@ describe('DELETE /api/notifications/subscribe', () => {
     expect(res.status).toBe(400);
   });
 
-  it('returns 200 and calls fetchAuthMutation on valid endpoint', async () => {
+  it('returns 200 and calls fetchMutation on valid endpoint', async () => {
     const res = await DELETE(makeRequest('DELETE', { endpoint: VALID_SUB.endpoint }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);
-    expect(fetchAuthMutation).toHaveBeenCalledOnce();
+    expect(fetchMutation).toHaveBeenCalledOnce();
   });
 
-  it('returns 401 when fetchAuthMutation throws Unauthenticated', async () => {
-    vi.mocked(fetchAuthMutation).mockRejectedValue(new Error('Unauthenticated'));
+  it('returns 500 when fetchMutation throws', async () => {
+    vi.mocked(fetchMutation).mockRejectedValue(new Error('Database error'));
     const res = await DELETE(makeRequest('DELETE', { endpoint: VALID_SUB.endpoint }));
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(500);
   });
 });

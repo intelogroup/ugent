@@ -1,7 +1,7 @@
 import { openai } from '@ai-sdk/openai';
 import { streamText, StreamData } from 'ai';
 import { getContext, getImages } from '@/lib/pinecone';
-import { isAuthenticated } from '@/lib/auth-server';
+import { withAuth } from '@workos-inc/authkit-nextjs';
 import { z } from 'zod';
 
 const messageSchema = z.object({
@@ -38,7 +38,8 @@ function selectModel(topScore: number) {
 }
 
 export async function POST(req: Request) {
-  if (!(await isAuthenticated())) {
+  const { user } = await withAuth();
+  if (!user) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },

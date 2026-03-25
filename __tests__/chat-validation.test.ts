@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('@/lib/auth-server', () => ({
-  isAuthenticated: vi.fn(),
+vi.mock('@workos-inc/authkit-nextjs', () => ({
+  withAuth: vi.fn(),
 }));
 
 vi.mock('@/lib/pinecone', () => ({
@@ -21,13 +21,13 @@ vi.mock('ai', () => ({
   },
 }));
 
-import { isAuthenticated } from '@/lib/auth-server';
+import { withAuth } from '@workos-inc/authkit-nextjs';
 
 describe('POST /api/chat — Zod validation (B2)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Auth passes so Zod validation runs first — a 400 proves Zod rejected before Pinecone/OpenAI
-    vi.mocked(isAuthenticated).mockResolvedValue(true);
+    // Auth passes so Zod validation runs — a 400 proves Zod rejected before Pinecone/OpenAI
+    vi.mocked(withAuth).mockResolvedValue({ user: { email: 'test@example.com' }, accessToken: 'tok' } as any);
   });
 
   const makeRequest = (body: unknown) =>
@@ -73,16 +73,15 @@ describe('POST /api/chat — Zod validation (B2)', () => {
     expect(json.error).toBe('Invalid request');
   });
 
-  it('reaches auth check with valid messages (returns 401 when auth mock returns false)', async () => {
-    // Override auth to return false so we get a clean 401 proving Zod passed
-    vi.mocked(isAuthenticated).mockResolvedValue(false);
+  it('reaches auth check with valid messages (returns 401 when auth mock returns unauthenticated)', async () => {
+    // Override auth to return null user so we get a clean 401 proving Zod passed
+    vi.mocked(withAuth).mockResolvedValue({ user: null, accessToken: null } as any);
     vi.resetModules();
     const { POST } = await import('@/app/api/chat/route');
     const res = await POST(
       makeRequest({ messages: [{ role: 'user', content: 'valid message' }] })
     );
-    // Auth runs BEFORE Zod in this route — valid body gets past Zod
-    // A 401 here confirms the request was not rejected by Zod (i.e., Zod ran and accepted it)
+    // A 401 here confirms the request was not rejected by Zod
     expect(res.status).toBe(401);
   });
 });
