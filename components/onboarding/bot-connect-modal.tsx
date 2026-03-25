@@ -25,9 +25,21 @@ export function BotConnectModal({ onClose }: { onClose: () => void }) {
   const status = useQuery(api.botOnboarding.getConnectionStatus, currentUser?._id ? {} : "skip");
   const genTelegram = useMutation(api.botOnboarding.generateTelegramToken);
   const genWhatsapp = useMutation(api.botOnboarding.generateWhatsappToken);
+  const disconnect = useMutation(api.botOnboarding.disconnectTelegram);
+  const [disconnecting, setDisconnecting] = useState(false);
 
   const isConnected =
     tab === "telegram" ? status?.telegramConnected : status?.whatsappConnected;
+
+  async function handleDisconnect() {
+    setDisconnecting(true);
+    try {
+      await disconnect({});
+      setResult(null);
+    } finally {
+      setDisconnecting(false);
+    }
+  }
 
   async function handleGenerate() {
     setLoading(true);
@@ -105,20 +117,37 @@ export function BotConnectModal({ onClose }: { onClose: () => void }) {
 
         {/* Connected state */}
         {isConnected && !result && (
-          <div className="flex flex-col items-center gap-2 py-2">
+          <div className="flex flex-col items-center gap-3 py-2">
             <CheckCircle2 className="h-8 w-8 text-green-500" />
             <p className="text-sm font-medium text-green-600 dark:text-green-400">
               {tab === "telegram"
                 ? `Connected${status?.telegramUsername ? ` as @${status.telegramUsername}` : ""}`
                 : "WhatsApp connected"}
             </p>
-            <button
-              onClick={handleGenerate}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-              Re-link account
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleGenerate}
+                disabled={loading || disconnecting}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Re-link account
+              </button>
+              {tab === "telegram" && (
+                <button
+                  onClick={handleDisconnect}
+                  disabled={disconnecting || loading}
+                  className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 transition-colors"
+                >
+                  {disconnecting ? (
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <X className="h-3.5 w-3.5" />
+                  )}
+                  Disconnect
+                </button>
+              )}
+            </div>
           </div>
         )}
 

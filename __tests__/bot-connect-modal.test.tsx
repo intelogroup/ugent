@@ -10,11 +10,13 @@ vi.mock("react-qr-code", () => ({
 // Mock convex/react
 const mockGenerateTelegram = vi.fn();
 const mockGenerateWhatsapp = vi.fn();
+const mockDisconnect = vi.fn();
 
 vi.mock("convex/react", () => ({
   useMutation: (key: string) => {
     if (key === "botOnboarding:generateTelegramToken") return mockGenerateTelegram;
     if (key === "botOnboarding:generateWhatsappToken") return mockGenerateWhatsapp;
+    if (key === "botOnboarding:disconnectTelegram") return mockDisconnect;
     return vi.fn();
   },
   useQuery: vi.fn(),
@@ -30,6 +32,7 @@ vi.mock("@/convex/_generated/api", () => ({
       generateTelegramToken: "botOnboarding:generateTelegramToken",
       generateWhatsappToken: "botOnboarding:generateWhatsappToken",
       getConnectionStatus: "botOnboarding:getConnectionStatus",
+      disconnectTelegram: "botOnboarding:disconnectTelegram",
     },
   },
 }));
@@ -111,5 +114,27 @@ describe("BotConnectModal", () => {
     });
     expect(screen.getByTestId("qrcode")).toBeInTheDocument();
     expect(screen.getByText("Open in Telegram")).toBeInTheDocument();
+  });
+
+  it("shows Disconnect button when telegramConnected is true", () => {
+    vi.mocked(useQuery).mockImplementation((key: string) => {
+      if (key === "users:getCurrentUser") return mockCurrentUser;
+      return { telegramConnected: true, telegramUsername: "testuser", whatsappConnected: false };
+    });
+    render(<BotConnectModal onClose={onClose} />);
+    expect(screen.getByText("Disconnect")).toBeInTheDocument();
+  });
+
+  it("calls disconnectTelegram mutation when Disconnect is clicked", async () => {
+    mockDisconnect.mockResolvedValue(undefined);
+    vi.mocked(useQuery).mockImplementation((key: string) => {
+      if (key === "users:getCurrentUser") return mockCurrentUser;
+      return { telegramConnected: true, telegramUsername: "testuser", whatsappConnected: false };
+    });
+    render(<BotConnectModal onClose={onClose} />);
+    fireEvent.click(screen.getByText("Disconnect"));
+    await vi.waitFor(() => {
+      expect(mockDisconnect).toHaveBeenCalledWith({});
+    });
   });
 });
