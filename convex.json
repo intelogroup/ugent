@@ -1,0 +1,11 @@
+{
+  "functions": "convex/",
+  "auth": {
+    "providers": [
+      {
+        "type": "workos",
+        "clientId": "client_placeholder_replace_me"
+      }
+    ]
+  }
+}
