@@ -60,9 +60,10 @@ describe("BotConnectModal", () => {
   });
 
   it("calls onClose when backdrop is clicked", () => {
-    const { container } = render(<BotConnectModal onClose={onClose} />);
-    // Click backdrop (first child of fixed container)
-    fireEvent.click(container.firstChild as Element);
+    render(<BotConnectModal onClose={onClose} />);
+    // Modal renders via createPortal into document.body — query from there
+    const backdrop = document.body.querySelector(".fixed.inset-0") as Element;
+    fireEvent.click(backdrop);
     expect(onClose).toHaveBeenCalled();
   });
 

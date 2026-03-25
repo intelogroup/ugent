@@ -214,3 +214,29 @@ export const getConnectionStatus = query({
     };
   },
 });
+
+/**
+ * Unlink the current user's Telegram account.
+ * Clears telegramId and telegramUsername from the user row.
+ */
+export const disconnectTelegram = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthenticated");
+
+    const userRow = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .first();
+
+    if (userRow) {
+      await ctx.db.patch(userRow._id, {
+        telegramId: undefined,
+        telegramUsername: undefined,
+      });
+    }
+  },
+});
