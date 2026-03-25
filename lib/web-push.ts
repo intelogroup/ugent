@@ -240,7 +240,7 @@ export async function sendWebPush(
       "Crypto-Key": `dh=${base64url(serverPublicKey)}; p256ecdsa=${vapidKeys.publicKey}`,
       TTL: "86400",
     },
-    body: ciphertext,
+    body: ciphertext as unknown as BodyInit,
   });
 
   if (res.status === 410 || res.status === 404) {

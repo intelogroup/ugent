@@ -1,5 +1,5 @@
 import { openai } from '@ai-sdk/openai';
-import { streamText, StreamData } from 'ai';
+import { streamText, StreamData, CoreMessage } from 'ai';
 import { getContext, getImages } from '@/lib/pinecone';
 import { withAuth } from '@workos-inc/authkit-nextjs';
 import { z } from 'zod';
@@ -116,7 +116,7 @@ Instructions:
       model,
       messages: [
         { role: 'system', content: systemPrompt },
-        ...messages,
+        ...messages as CoreMessage[],
       ],
       onFinish() {
         data.close();

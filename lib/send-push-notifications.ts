@@ -37,7 +37,8 @@ export async function sendPushNotificationsToAll(facts: Fact[]): Promise<void> {
 
   try {
     const client = new ConvexHttpClient(convexUrl);
-    subscriptions = await client.query(internal.pushSubscriptions.listAll, {});
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    subscriptions = await client.query(internal.pushSubscriptions.listAll as any, {});
   } catch (err) {
     console.error("[push] Failed to fetch subscriptions:", err);
     return;

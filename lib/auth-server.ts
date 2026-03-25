@@ -1,6 +1,6 @@
-import { withAuth, getAuth } from '@workos-inc/authkit-nextjs';
+import { withAuth } from '@workos-inc/authkit-nextjs';
 
-export { withAuth, getAuth };
+export { withAuth };
 
 // Helper: get authenticated user or return 401 response
 export async function requireAuth() {
