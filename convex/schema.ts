@@ -3,21 +3,29 @@ import { v } from "convex/values";
 
 export default defineSchema({
   users: defineTable({
+    tokenIdentifier: v.string(),
+    name: v.optional(v.string()),
     email: v.optional(v.string()),
+    image: v.optional(v.string()),
+    plan: v.optional(v.string()),
+    trialStartedAt: v.optional(v.number()),
+    createdAt: v.optional(v.number()),
+    updatedAt: v.optional(v.number()),
     telegramId: v.optional(v.string()),
     telegramUsername: v.optional(v.string()),
     whatsappPhone: v.optional(v.string()),
-    plan: v.union(v.literal("trial"), v.literal("pro"), v.literal("expired")),
-    trialStartedAt: v.number(),
     stripeCustomerId: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
+    stripePriceId: v.optional(v.string()),
+    stripeCurrentPeriodEnd: v.optional(v.number()),
+    subscriptionStatus: v.optional(v.string()),
     planExpiresAt: v.optional(v.number()),
-    createdAt: v.number(),
-    authId: v.optional(v.string()),
   })
+    .index("by_token", ["tokenIdentifier"])
     .index("by_email", ["email"])
     .index("by_telegram_id", ["telegramId"])
     .index("by_whatsapp_phone", ["whatsappPhone"])
-    .index("by_auth_id", ["authId"]),
+    .index("by_stripe_customer", ["stripeCustomerId"]),
 
   telegramConnectTokens: defineTable({
     userId: v.id("users"),
