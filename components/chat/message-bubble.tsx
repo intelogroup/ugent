@@ -19,13 +19,13 @@ type PlayState = 'idle' | 'speaking';
 
 function VoiceButton({ text }: { text: string }) {
   const [state, setState] = useState<PlayState>('idle');
-  const [voicesLoaded, setVoicesLoaded] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
 
-  // Chrome loads voices async — preload them so getVoices() works on first click
+  // Chrome loads voices async — cache them via ref so getVoices() works on first click
   useEffect(() => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
-    const sync = () => setVoicesLoaded(window.speechSynthesis.getVoices().length > 0);
+    const sync = () => { voicesRef.current = window.speechSynthesis.getVoices(); };
     sync();
     window.speechSynthesis.addEventListener('voiceschanged', sync);
     return () => window.speechSynthesis.removeEventListener('voiceschanged', sync);
@@ -47,7 +47,7 @@ function VoiceButton({ text }: { text: string }) {
     utteranceRef.current = utterance;
 
     // Pick the best available voice — prefer natural/premium voices
-    const voices = window.speechSynthesis.getVoices();
+    const voices = voicesRef.current;
     const preferred = [
       'Google UK English Female',  // Chrome — clear, natural
       'Google US English',         // Chrome fallback
@@ -73,7 +73,7 @@ function VoiceButton({ text }: { text: string }) {
     };
 
     window.speechSynthesis.speak(utterance);
-  }, [state, text, voicesLoaded]);
+  }, [state, text]);
 
   // Don't render if browser doesn't support Web Speech
   if (typeof window !== 'undefined' && !window.speechSynthesis) return null;
