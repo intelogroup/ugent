@@ -46,6 +46,7 @@ export function ChatInterface({
 
   const [threadId, setThreadId] = useState<Id<"threads"> | null>(null);
   const [initialPromptSent, setInitialPromptSent] = useState(false);
+  const [streamError, setStreamError] = useState<string | null>(null);
 
   // If resuming a thread, use that directly
   useEffect(() => {
@@ -98,6 +99,13 @@ export function ChatInterface({
   const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat({
     api: '/api/chat',
     initialMessages,
+    onError: (error) => {
+      const msg = error.message?.toLowerCase().includes('unauthorized')
+        ? 'Session expired — please reload.'
+        : 'Something went wrong. Please try again.';
+      setStreamError(msg);
+    },
+    onResponse: () => setStreamError(null),
     onFinish: async (message) => {
       if (!threadId) return;
       await addMessage({
@@ -225,6 +233,9 @@ export function ChatInterface({
         )}
       </div>
 
+      {streamError && (
+        <p className="text-xs text-destructive text-center px-4 py-1">{streamError}</p>
+      )}
       <div className="bg-white">
         <InputBar
           input={input}
