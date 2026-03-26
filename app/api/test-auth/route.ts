@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     data = {
       accessToken: result.accessToken,
       refreshToken: result.refreshToken,
-      user: result.user as Record<string, unknown>,
+      user: result.user as unknown as Record<string, unknown>,
     };
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 401 });
