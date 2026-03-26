@@ -18,10 +18,14 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    command: 'echo "Dev server should be running on port 3000"',
-    url: 'http://localhost:3000',
-    reuseExistingServer: true,
-    timeout: 5000,
-  },
+  ...(process.env.BASE_URL
+    ? {}
+    : {
+        webServer: {
+          command: 'echo "Dev server should be running on port 3000"',
+          url: 'http://localhost:3000',
+          reuseExistingServer: true,
+          timeout: 5000,
+        },
+      }),
 });
