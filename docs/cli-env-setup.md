@@ -32,30 +32,38 @@ CONVEX_DEPLOY_KEY=your_convex_deploy_key_here
 
 ## Step 3: Source `.env` in Your Shell
 
-Add this to your `~/.bashrc` or `~/.zshrc` so the variables are loaded in every terminal session:
+The `.env` file is only useful inside the ugent project directory. **Do not** add a generic `source .env` to your shell rc — it would load whichever `.env` is in your current directory, risking token leakage from other projects.
+
+Instead, source it manually after navigating into the project:
 
 ```bash
-# Load project env vars (if in ugent directory)
-if [ -f .env ]; then
-  set -a
-  source .env
-  set +a
-fi
-```
-
-Or source it manually when needed:
-
-```bash
+cd ~/path/to/ugent
 source .env
 ```
+
+Or, for automatic directory-scoped loading, use [direnv](https://direnv.net/):
+
+```bash
+# Install direnv, then add to ~/.bashrc or ~/.zshrc:
+eval "$(direnv hook bash)"  # or: eval "$(direnv hook zsh)"
+```
+
+Then create a `.envrc` in the project root:
+
+```bash
+# ugent/.envrc
+dotenv
+```
+
+Run `direnv allow` once, and variables will load/unload automatically when you enter/leave the directory.
 
 ## Step 4: Configure Claude Code (Optional)
 
 For Claude Code sessions (CLI/web), add env vars to your Claude Code settings so they're available automatically:
 
 1. Open Claude Code
-2. Run `/update-config`
-3. Add environment variables under the `env` key in `settings.json`:
+2. Run `/config` to open settings, or edit `~/.claude/settings.json` directly
+3. Add environment variables under the `env` key:
 
 ```json
 {
