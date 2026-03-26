@@ -16,7 +16,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Pathology: '#6b7280',
 };
 
-function buildEmailHtml(facts: Fact[]): string {
+export function buildEmailHtml(facts: Fact[]): string {
   const generatedAt = facts[0]
     ? new Date(facts[0].generatedAt).toLocaleString('en-US', {
         weekday: 'long',
