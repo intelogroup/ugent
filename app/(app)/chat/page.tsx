@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChatInterface } from "@/components/chat/chat-interface";
+import { ChatErrorBoundary } from "@/components/chat/chat-error-boundary";
 import type { Id } from "@/convex/_generated/dataModel";
 import type { ChapterScope } from "@/lib/chapters";
 
@@ -24,10 +25,12 @@ function ChatPageInner() {
       : undefined;
 
   return (
-    <ChatInterface
-      resumeThreadId={resumeThreadId}
-      chapterScope={chapterScope}
-    />
+    <ChatErrorBoundary>
+      <ChatInterface
+        resumeThreadId={resumeThreadId}
+        chapterScope={chapterScope}
+      />
+    </ChatErrorBoundary>
   );
 }
 
