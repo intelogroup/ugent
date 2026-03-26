@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu, Bot, SquarePen, Home, Search, MessageSquare, Layers, Clock, BookOpen, Sun, Moon, BarChart2, Link2, BrainCircuit } from "lucide-react";
+import { Menu, Bot, SquarePen, Home, MessageSquare, Layers, Clock, Sun, Moon, Link2, BrainCircuit } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { WhatsAppSubscribe } from "@/components/whatsapp/whatsapp-subscribe";
 import { BotConnectModal } from "@/components/onboarding/bot-connect-modal";
@@ -12,10 +12,9 @@ import { useTheme } from "@/components/theme-provider";
 interface HeaderProps {
   onMenuClick: () => void;
   onNewChat?: () => void;
-  onChapterNavToggle?: () => void;
 }
 
-export function Header({ onMenuClick, onNewChat, onChapterNavToggle }: HeaderProps) {
+export function Header({ onMenuClick, onNewChat }: HeaderProps) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
   const [showBotConnect, setShowBotConnect] = useState(false);
@@ -49,17 +48,6 @@ export function Header({ onMenuClick, onNewChat, onChapterNavToggle }: HeaderPro
             aria-label="Dashboard"
           >
             <Home className="h-5 w-5" />
-          </Link>
-          <Link
-            href="/browse"
-            className={`p-2 rounded-lg transition-colors ${
-              pathname === "/browse"
-                ? "bg-accent text-foreground"
-                : "hover:bg-accent text-muted-foreground"
-            }`}
-            aria-label="Browse Topics"
-          >
-            <Search className="h-5 w-5" />
           </Link>
           <Link
             href="/chat"
@@ -104,26 +92,6 @@ export function Header({ onMenuClick, onNewChat, onChapterNavToggle }: HeaderPro
             aria-label="Quick Quiz"
           >
             <BrainCircuit className="h-5 w-5" />
-          </Link>
-          {onChapterNavToggle && (
-            <button
-              onClick={onChapterNavToggle}
-              className="p-2 hover:bg-accent rounded-lg transition-colors text-muted-foreground"
-              aria-label="Chapter Navigator"
-            >
-              <BookOpen className="h-5 w-5" />
-            </button>
-          )}
-          <Link
-            href="/progress"
-            className={`p-2 rounded-lg transition-colors ${
-              pathname === "/progress"
-                ? "bg-accent text-foreground"
-                : "hover:bg-accent text-muted-foreground"
-            }`}
-            aria-label="Progress Heatmap"
-          >
-            <BarChart2 className="h-5 w-5" />
           </Link>
           <button
             onClick={() => setShowBotConnect(true)}

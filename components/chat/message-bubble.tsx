@@ -2,7 +2,7 @@
 
 import { Message } from 'ai';
 import { Bot, AlertCircle, Volume2, VolumeX, ImageOff, Bookmark } from 'lucide-react';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,16 @@ type PlayState = 'idle' | 'speaking';
 function VoiceButton({ text }: { text: string }) {
   const [state, setState] = useState<PlayState>('idle');
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
+
+  // Chrome loads voices async — cache them via ref so getVoices() works on first click
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    const sync = () => { voicesRef.current = window.speechSynthesis.getVoices(); };
+    sync();
+    window.speechSynthesis.addEventListener('voiceschanged', sync);
+    return () => window.speechSynthesis.removeEventListener('voiceschanged', sync);
+  }, []);
 
   const handleVoice = useCallback(() => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
@@ -35,6 +45,22 @@ function VoiceButton({ text }: { text: string }) {
 
     const utterance = new SpeechSynthesisUtterance(cleaned);
     utteranceRef.current = utterance;
+
+    // Pick the best available voice — prefer natural/premium voices
+    const voices = voicesRef.current;
+    const preferred = [
+      'Google UK English Female',  // Chrome — clear, natural
+      'Google US English',         // Chrome fallback
+      'Samantha',                  // macOS — high quality
+      'Karen',                     // macOS Australian
+      'Daniel',                    // macOS British
+      'Microsoft Aria Online',     // Edge — neural voice
+      'Microsoft Jenny Online',    // Edge — neural voice
+    ];
+    const best = preferred
+      .map((name) => voices.find((v) => v.name === name))
+      .find(Boolean);
+    if (best) utterance.voice = best;
 
     utterance.onstart = () => setState('speaking');
     utterance.onend = () => {

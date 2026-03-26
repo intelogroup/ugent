@@ -9,7 +9,7 @@ import { AuthErrorBoundary } from "@/components/auth/auth-error-boundary";
 import { BotConnectModal } from "@/components/onboarding/bot-connect-modal";
 import {
   MessageSquare,
-  Search,
+  BrainCircuit,
   SquarePen,
   Clock,
   BookOpen,
@@ -115,11 +115,11 @@ function DashboardContent() {
             <span className="text-sm font-medium">New Chat</span>
           </button>
           <button
-            onClick={() => router.push("/browse")}
+            onClick={() => router.push("/quiz")}
             className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-secondary hover:bg-accent border border-border transition-colors"
           >
-            <Search className="h-6 w-6 text-muted-foreground" />
-            <span className="text-sm font-medium">Browse Topics</span>
+            <BrainCircuit className="h-6 w-6 text-muted-foreground" />
+            <span className="text-sm font-medium">Quick Quiz</span>
           </button>
         </div>
 
@@ -287,14 +287,14 @@ function DashboardContent() {
           </h2>
           <div className="grid grid-cols-2 gap-2">
             <button
-              onClick={() => router.push("/browse")}
+              onClick={() => router.push("/chat?book=pathoma")}
               className="flex items-center gap-2.5 p-3 rounded-xl bg-secondary/50 hover:bg-accent border border-transparent hover:border-border transition-all"
             >
               <BookOpen className="h-4 w-4 text-orange-500" />
               <span className="text-sm font-medium">Pathoma</span>
             </button>
             <button
-              onClick={() => router.push("/browse")}
+              onClick={() => router.push("/chat?book=first-aid")}
               className="flex items-center gap-2.5 p-3 rounded-xl bg-secondary/50 hover:bg-accent border border-transparent hover:border-border transition-all"
             >
               <BookOpen className="h-4 w-4 text-green-500" />
