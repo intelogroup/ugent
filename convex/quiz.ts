@@ -1,8 +1,8 @@
 import { action } from "./_generated/server";
 import { v } from "convex/values";
-import { generateQuizCore } from "./quiz-core";
+import { generateQuizCore } from "./quizCore";
 
-export type { MCQOption, MCQuestion } from "./quiz-core";
+export type { MCQOption, MCQuestion } from "./quizCore";
 
 /**
  * Generate 5 multiple-choice questions for a given chapter/topic.
