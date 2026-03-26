@@ -16,42 +16,24 @@ const TEST_EMAIL = process.env.UGENT_TEST_EMAIL || '';
 const TEST_PASSWORD = process.env.UGENT_TEST_PASSWORD || '';
 
 // ---------------------------------------------------------------------------
-// Helper: sign in via WorkOS AuthKit hosted login page
+// Helper: sign in via dev-only programmatic endpoint — bypasses WorkOS hosted
+// auth (CAPTCHA-blocked in headless Playwright)
 // ---------------------------------------------------------------------------
 async function signIn(page: import('@playwright/test').Page) {
-  await page.goto(`${BASE_URL}/login`);
-  await page.waitForLoadState('networkidle');
+  // Programmatic sign-in via dev-only endpoint — bypasses WorkOS hosted auth (CAPTCHA-blocked)
+  const res = await page.request.post(`${BASE_URL}/api/test-auth`, {
+    data: { email: TEST_EMAIL, password: TEST_PASSWORD },
+    headers: { 'Content-Type': 'application/json' },
+  });
 
-  // Click "Sign In" which redirects to WorkOS hosted auth
-  const signInLink = page.locator('a', { hasText: 'Sign In' });
-  await expect(signInLink).toBeVisible({ timeout: 10000 });
-  await signInLink.click();
-
-  // Wait for WorkOS auth page to load
-  await page.waitForLoadState('networkidle');
-
-  // WorkOS test mode shows an email input on the hosted page
-  const emailInput = page.locator('input[type="email"], input[name="email"]').first();
-  await emailInput.waitFor({ timeout: 15000 });
-  await emailInput.fill(TEST_EMAIL);
-
-  // Look for continue/submit button on WorkOS page
-  const continueBtn = page.locator('button[type="submit"], button:has-text("Continue"), button:has-text("Sign in")').first();
-  await continueBtn.click();
-
-  // If password field appears (WorkOS email+password auth)
-  if (TEST_PASSWORD) {
-    const passwordInput = page.locator('input[type="password"]').first();
-    await passwordInput.waitFor({ timeout: 10000 }).catch(() => null);
-    if (await passwordInput.isVisible().catch(() => false)) {
-      await passwordInput.fill(TEST_PASSWORD);
-      const submitBtn = page.locator('button[type="submit"], button:has-text("Sign in"), button:has-text("Continue")').first();
-      await submitBtn.click();
-    }
+  if (!res.ok()) {
+    const body = await res.text();
+    throw new Error(`Test auth failed (${res.status()}): ${body}`);
   }
 
-  // Wait for redirect back to app (dashboard or chat)
-  await page.waitForURL(/\/(dashboard|chat|browse)/, { timeout: 30000 });
+  // Navigate to dashboard to confirm session is active
+  await page.goto(`${BASE_URL}/dashboard`);
+  await page.waitForLoadState('networkidle');
 }
 
 // ---------------------------------------------------------------------------
