@@ -11,8 +11,8 @@ import { test, expect } from '@playwright/test';
  * If credentials are not set, auth-dependent tests are skipped.
  */
 
-const BASE_URL = process.env.BASE_URL || 'https://ugent-phi.vercel.app';
-const TEST_EMAIL = process.env.UGENT_TEST_EMAIL || 'jimkalinov@gmail.com';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const TEST_EMAIL = process.env.UGENT_TEST_EMAIL || '';
 const TEST_PASSWORD = process.env.UGENT_TEST_PASSWORD || '';
 
 // ---------------------------------------------------------------------------
@@ -67,13 +67,18 @@ test.describe('Chat — Unauthenticated', () => {
     const redirectedToLogin = url.includes('/login') || url.includes('/auth');
     console.log(`📊 /chat unauthenticated → ${url}`);
 
-    // In production the auth middleware redirects to /login.
-    // Locally without Convex the page may error instead.
     if (!redirectedToLogin) {
-      const hasError = await page.locator('text=/error|ConvexReactClient/i').count();
-      console.log(`⚠️  No redirect, but page has error: ${hasError > 0}`);
-      expect(hasError > 0 || redirectedToLogin).toBe(true);
+      // If no redirect, check whether this is a Convex config error (incomplete local env).
+      // In that case skip rather than false-pass.
+      const hasConvexError = await page.locator('text=/ConvexReactClient/i').count();
+      if (hasConvexError > 0) {
+        console.log('⚠️  Skipping — local env without Convex cannot test redirect');
+        test.skip(true, 'Local environment without Convex — redirect cannot be tested');
+        return;
+      }
     }
+
+    expect(redirectedToLogin).toBe(true);
   });
 });
 
@@ -82,7 +87,10 @@ test.describe('Chat — Unauthenticated', () => {
 // ---------------------------------------------------------------------------
 test.describe('Chat — Authenticated', () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(!TEST_PASSWORD, 'UGENT_TEST_PASSWORD not set — skipping authenticated chat tests');
+    test.skip(
+      !TEST_EMAIL || !TEST_PASSWORD,
+      'UGENT_TEST_EMAIL/UGENT_TEST_PASSWORD not set — skipping authenticated chat tests'
+    );
     await signIn(page);
   });
 
@@ -262,7 +270,10 @@ test.describe('Chat — Authenticated', () => {
 // ---------------------------------------------------------------------------
 test.describe('Chat — Chapter Scoped', () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(!TEST_PASSWORD, 'UGENT_TEST_PASSWORD not set — skipping chapter-scoped chat tests');
+    test.skip(
+      !TEST_EMAIL || !TEST_PASSWORD,
+      'UGENT_TEST_EMAIL/UGENT_TEST_PASSWORD not set — skipping chapter-scoped chat tests'
+    );
     await signIn(page);
   });
 
