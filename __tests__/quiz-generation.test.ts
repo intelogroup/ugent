@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { generateQuizCore, type MCQuestion } from "../convex/quiz-core";
+import { generateQuizCore, type MCQuestion } from "../convex/quizCore";
 
 /**
  * Tests for the quiz generation endpoint (convex/quiz-core.ts).
