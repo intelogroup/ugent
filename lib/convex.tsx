@@ -3,7 +3,9 @@ import { ConvexProviderWithAuth, ConvexReactClient } from 'convex/react';
 import { useAuth, useAccessToken } from '@workos-inc/authkit-nextjs/components';
 import { ReactNode, useCallback } from 'react';
 
-const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+const convex = process.env.NEXT_PUBLIC_CONVEX_URL
+  ? new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL)
+  : null;
 
 function useWorkOSAuth() {
   const { user, loading } = useAuth();
@@ -27,6 +29,7 @@ function useWorkOSAuth() {
 }
 
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
+  if (!convex) return <>{children}</>;
   return (
     <ConvexProviderWithAuth client={convex} useAuth={useWorkOSAuth}>
       {children}
