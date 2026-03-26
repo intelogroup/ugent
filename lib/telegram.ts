@@ -1,6 +1,6 @@
 import type { Fact } from './facts-agent';
 
-function buildFactsText(facts: Fact[]): string {
+export function buildFactsText(facts: Fact[]): string {
   const date = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
