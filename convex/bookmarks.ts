@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { Id } from "./_generated/dataModel";
 
 async function getAuthUserId(ctx: any): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
@@ -73,7 +74,7 @@ export const isBookmarked = query({
       const existing = await ctx.db
         .query("bookmarks")
         .withIndex("by_user_message", (q) =>
-          q.eq("userId", identity.tokenIdentifier).eq("messageId", messageId)
+          q.eq("userId", identity.tokenIdentifier).eq("messageId", messageId as Id<"messages">)
         )
         .first();
       return !!existing;
