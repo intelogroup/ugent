@@ -65,7 +65,7 @@ export const toggleBookmark = mutation({
  * Check if a specific message is bookmarked by the current user.
  */
 export const isBookmarked = query({
-  args: { messageId: v.id("messages") },
+  args: { messageId: v.string() },
   handler: async (ctx, { messageId }) => {
     try {
       const identity = await ctx.auth.getUserIdentity();

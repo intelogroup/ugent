@@ -91,8 +91,8 @@ function VoiceButton({ text }: { text: string }) {
  * Bookmark button for assistant messages. Stars Q&A pairs for later review.
  */
 function BookmarkButton({ messageId }: { messageId: string }) {
-  // Only query if the ID looks like a valid Convex ID (not a temp useChat ID)
-  const isConvexId = messageId.length > 10 && !messageId.startsWith('msg-');
+  // Only query if the ID looks like a valid Convex ID (base32, no hyphens, ~20 chars)
+  const isConvexId = /^[0-9a-zA-Z]{15,30}$/.test(messageId);
   const isBookmarked = useQuery(
     api.bookmarks.isBookmarked,
     isConvexId ? { messageId: messageId as Id<"messages"> } : "skip"
