@@ -67,16 +67,15 @@ export const toggleBookmark = mutation({
 export const isBookmarked = query({
   args: { messageId: v.id("messages") },
   handler: async (ctx, { messageId }) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return false;
     try {
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) return false;
       const existing = await ctx.db
         .query("bookmarks")
         .withIndex("by_user_message", (q) =>
           q.eq("userId", identity.tokenIdentifier).eq("messageId", messageId)
         )
         .first();
-
       return !!existing;
     } catch {
       return false;
