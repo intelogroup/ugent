@@ -136,6 +136,7 @@ export function ChatInterface({
   }, [messages]);
 
   const handleSubmitWithPersist = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!threadId || !input.trim()) return;
     // Prepend chapter context if scoped, so RAG retrieval focuses correctly
     const finalContent = chapterScope
