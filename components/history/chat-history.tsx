@@ -40,7 +40,7 @@ export function ChatHistory({ onSelectThread, onBack }: ChatHistoryProps) {
   const currentUser = useQuery(api.users.getCurrentUser);
   const threads = useQuery(
     api.threads.listRecentThreadsWithPreview,
-    currentUser?._id ? { userId: currentUser._id, limit: 50 } : "skip"
+    currentUser?.tokenIdentifier ? { userId: currentUser.tokenIdentifier, limit: 50 } : "skip"
   );
 
   if (!isAuthenticated || !currentUser) {
