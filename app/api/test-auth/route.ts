@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sealData } from 'iron-session';
 import { cookies } from 'next/headers';
+import { WorkOS } from '@workos-inc/node';
 
 const COOKIE_NAME = process.env.WORKOS_COOKIE_NAME ?? 'wos-session';
 const COOKIE_PASSWORD = process.env.WORKOS_COOKIE_PASSWORD!;
@@ -12,34 +13,26 @@ export async function POST(request: NextRequest) {
 
   const { email, password } = (await request.json()) as { email: string; password: string };
 
-  const res = await fetch('https://api.workos.com/user_management/authenticate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      client_id: process.env.WORKOS_CLIENT_ID,
-      client_secret: process.env.WORKOS_API_KEY,
+  let data: { accessToken: string; refreshToken: string; user: Record<string, unknown> };
+  try {
+    const workos = new WorkOS(process.env.WORKOS_API_KEY);
+    const result = await workos.userManagement.authenticateWithPassword({
+      clientId: process.env.WORKOS_CLIENT_ID!,
       email,
       password,
-      grant_type: 'urn:workos:oauth:grant-type:password',
-      ip_address: '127.0.0.1',
-      user_agent: 'playwright-test',
-    }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text();
-    return NextResponse.json({ error: body }, { status: 401 });
+    });
+    data = {
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      user: result.user as Record<string, unknown>,
+    };
+  } catch (err) {
+    return NextResponse.json({ error: String(err) }, { status: 401 });
   }
 
-  const data = (await res.json()) as {
-    access_token: string;
-    refresh_token: string;
-    user: Record<string, unknown>;
-  };
-
   const session = {
-    accessToken: data.access_token,
-    refreshToken: data.refresh_token,
+    accessToken: data.accessToken,
+    refreshToken: data.refreshToken,
     user: data.user,
   };
 
