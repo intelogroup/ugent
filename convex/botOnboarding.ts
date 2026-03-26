@@ -58,7 +58,7 @@ export const generateTelegramToken = mutation({
       used: false,
     });
 
-    const botUsername = process.env.TELEGRAM_BOT_USERNAME ?? "UGentMedBot";
+    const botUsername = process.env.TELEGRAM_BOT_USERNAME ?? "ugentphi_bot";
     const deepLink = `https://t.me/${botUsername}?start=${token}`;
 
     return { token, deepLink, expiresAt };

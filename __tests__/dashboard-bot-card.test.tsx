@@ -5,6 +5,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));
 
+
 vi.mock("@workos-inc/authkit-nextjs/components", () => ({
   useAuth: () => ({ user: { email: "test@example.com" }, loading: false }),
 }));

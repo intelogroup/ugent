@@ -75,7 +75,11 @@ export async function POST(req: Request) {
         }
       } catch (error) {
         console.error('[telegram] /start error:', error);
-        await sendTelegramMessage(chatId, 'Welcome to UGent! Ask me any USMLE Step 1 question.');
+        try {
+          await sendTelegramMessage(chatId, 'Welcome to UGent! Ask me any USMLE Step 1 question.');
+        } catch (sendErr) {
+          console.error('[telegram] fallback send error:', sendErr);
+        }
       }
       return new Response('OK', { status: 200 });
     }
