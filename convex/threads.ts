@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 export const getOrCreateWebThread = mutation({
@@ -158,5 +158,43 @@ export const listRecentThreadsWithPreview = query({
     );
 
     return threadsWithPreview.filter((t) => t.messageCount > 0);
+  },
+});
+
+/**
+ * One-time migration: fix web threads that stored currentUser._id instead of
+ * the WorkOS tokenIdentifier. Safe to re-run (idempotent).
+ */
+export const backfillWebThreadUserIds = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const webThreads = await ctx.db
+      .query("threads")
+      .filter((q) => q.eq(q.field("platform"), "web"))
+      .collect();
+
+    let fixed = 0;
+    let skipped = 0;
+
+    for (const thread of webThreads) {
+      if (thread.userId.startsWith("https://")) {
+        skipped++;
+        continue;
+      }
+
+      try {
+        const user = await ctx.db.get(thread.userId as any);
+        if (user && "tokenIdentifier" in user) {
+          await ctx.db.patch(thread._id, { userId: (user as any).tokenIdentifier });
+          fixed++;
+        } else {
+          skipped++;
+        }
+      } catch {
+        skipped++;
+      }
+    }
+
+    return { fixed, skipped, total: webThreads.length };
   },
 });
