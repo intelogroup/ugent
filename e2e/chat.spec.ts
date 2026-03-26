@@ -320,16 +320,23 @@ test.describe('Chat API — /api/chat', () => {
     console.log('✅ /api/chat correctly requires auth');
   });
 
-  test('POST /api/chat with invalid body returns 400', async ({ request }) => {
-    const res = await request.post(`${BASE_URL}/api/chat`, {
+  test('POST /api/chat with invalid body returns 400', async ({ page }) => {
+    if (!TEST_EMAIL || !TEST_PASSWORD) {
+      test.skip(true, 'Skipped — UGENT_TEST_EMAIL / UGENT_TEST_PASSWORD not set');
+      return;
+    }
+
+    await signIn(page);
+
+    // Use page.request so auth cookies from the browser session are included
+    const res = await page.request.post(`${BASE_URL}/api/chat`, {
       data: {},
       headers: { 'Content-Type': 'application/json' },
     });
 
     const status = res.status();
-    console.log(`📊 POST /api/chat invalid body: ${status}`);
-    // Should be 400 (bad request) or 401 (auth check first)
-    expect(status).toBeLessThan(500);
-    console.log('✅ /api/chat handles invalid body gracefully');
+    console.log(`📊 POST /api/chat authenticated + invalid body: ${status}`);
+    expect(status).toBe(400);
+    console.log('✅ /api/chat rejects invalid body with 400 after auth');
   });
 });
