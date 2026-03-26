@@ -89,7 +89,7 @@ export function ChatInterface({
   // Block render until auth + thread + history all ready
   const ready = isAuthenticated && currentUser && threadId && persistedMessages !== undefined;
 
-  const initialMessages = persistedMessages?.map((m) => ({
+  const initialMessages = persistedMessages?.map((m: { _id: string; role: string; content: string; imageAnnotations?: import('ai').JSONValue[] }) => ({
     id: m._id,
     role: m.role as 'user' | 'assistant',
     content: m.content,

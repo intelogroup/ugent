@@ -142,8 +142,8 @@ export function ProgressHeatmap() {
     );
   }
 
-  const booksInData = BOOKS.filter((b) => data.some((d) => d.bookSlug === b.slug));
-  const bookData = data.filter((d) => d.bookSlug === activeBook);
+  const booksInData = BOOKS.filter((b) => (data as Array<HeatmapEntry>).some((d) => d.bookSlug === b.slug));
+  const bookData = (data as Array<HeatmapEntry>).filter((d) => d.bookSlug === activeBook);
 
   return (
     <div className="space-y-4">

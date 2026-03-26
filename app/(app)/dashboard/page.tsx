@@ -206,7 +206,7 @@ function DashboardContent() {
             </div>
           ) : (
             <div className="space-y-2">
-              {recentThreads.map((thread) => (
+              {(recentThreads as Array<{ _id: string; title?: string; updatedAt: number; messageCount: number; platform?: string; lastMessage: { role: string; content: string } | null }>).map((thread) => (
                 <button
                   key={thread._id}
                   onClick={() => router.push(`/chat?thread=${thread._id}`)}
@@ -257,7 +257,7 @@ function DashboardContent() {
               </h2>
             </div>
             <div className="space-y-2">
-              {bookmarks.map((bm) => (
+              {(bookmarks as Array<{ _id: string; question?: string; answer: string; createdAt: number }>).map((bm) => (
                 <button
                   key={bm._id}
                   onClick={() => router.push("/chat")}

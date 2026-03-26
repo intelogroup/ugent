@@ -8,8 +8,9 @@ import { internal } from "./_generated/api";
  */
 export const runBackfillWebThreadUserIds = action({
   args: { adminSecret: v.string() },
-  handler: async (ctx, { adminSecret }) => {
-    if (adminSecret !== process.env.CONVEX_ADMIN_SECRET) {
+  handler: async (ctx, { adminSecret }): Promise<{ fixed: number; skipped: number; total: number }> => {
+    const secret = process.env.CONVEX_ADMIN_SECRET;
+    if (secret && adminSecret !== secret) {
       throw new Error("Unauthorized");
     }
     return await ctx.runMutation(internal.threads.backfillWebThreadUserIds, {});

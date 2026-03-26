@@ -79,7 +79,7 @@ export function ChatHistory({ onSelectThread, onBack }: ChatHistoryProps) {
             </p>
           </div>
         ) : (
-          threads.map((thread) => {
+          (threads as Array<{ _id: string; title?: string; updatedAt: number; platform?: string; chapterScope?: unknown; lastMessage: { role: string; content: string } | null; messageCount?: number }>).map((thread) => {
             const chapterScope = (thread as any).chapterScope as
               | ChapterScope
               | undefined;
