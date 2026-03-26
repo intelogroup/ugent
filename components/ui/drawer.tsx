@@ -130,7 +130,7 @@ export function Drawer({ isOpen, onClose, onNewChat }: DrawerProps) {
                   <span>Dashboard</span>
                 </button>
                 <button
-                  onClick={() => navigateTo("/browse")}
+                  onClick={() => navigateTo("/chat")}
                   className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium hover:bg-accent rounded-lg transition-colors"
                 >
                   <Search className="h-4 w-4 text-muted-foreground" />

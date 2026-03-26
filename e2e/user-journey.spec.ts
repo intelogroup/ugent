@@ -39,7 +39,7 @@ test.describe('Public Pages — UGent MedBot', () => {
   });
 
   test('protected routes redirect to login (unauthenticated)', async ({ page }) => {
-    const protectedRoutes = ['/dashboard', '/chat', '/review', '/browse'];
+    const protectedRoutes = ['/dashboard', '/chat', '/review'];
 
     for (const route of protectedRoutes) {
       await page.goto(`${BASE_URL}${route}`);

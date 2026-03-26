@@ -125,120 +125,11 @@ test.describe('Dashboard — Error State (unauthenticated)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Browse — Category filters & chapter navigation
-// ---------------------------------------------------------------------------
-test.describe('Browse Topics — Interactive', () => {
-  test('browse page renders chapter list and category filters', async ({ page }) => {
-    await page.goto(`${BASE_URL}/browse`);
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
-
-    // Check page loads at all (may redirect to login if auth required)
-    const url = page.url();
-    if (url.includes('/login')) {
-      console.log('⚠️  Browse requires auth — redirected to login');
-      return;
-    }
-
-    await expect(page.getByRole('heading', { name: 'Browse Topics' })).toBeVisible({ timeout: 5000 });
-    await expect(page.getByRole('textbox', { name: /search/i })).toBeVisible();
-
-    // Category filter buttons
-    const categoryButtons = ['All', 'Cardiovascular', 'Respiratory', 'Gastrointestinal'];
-    for (const cat of categoryButtons) {
-      const btn = page.getByRole('button', { name: cat });
-      await expect(btn).toBeVisible();
-    }
-
-    console.log('✅ Browse page renders with category filters');
-  });
-
-  test('category filter buttons are clickable', async ({ page }) => {
-    await page.goto(`${BASE_URL}/browse`);
-    await page.waitForTimeout(2000);
-
-    if (page.url().includes('/login')) {
-      test.skip(true, 'Browse requires auth');
-      return;
-    }
-
-    // Click Cardiovascular category
-    const cardioBtn = page.getByRole('button', { name: 'Cardiovascular' });
-    if (await cardioBtn.count() > 0) {
-      await cardioBtn.click();
-      await page.waitForTimeout(500);
-      console.log('✅ Cardiovascular filter clicked');
-    }
-
-    // Click All to reset
-    await page.getByRole('button', { name: 'All' }).click();
-    await page.waitForTimeout(500);
-    console.log('✅ All filter reset');
-  });
-
-  test('search box filters chapters', async ({ page }) => {
-    await page.goto(`${BASE_URL}/browse`);
-    await page.waitForTimeout(2000);
-
-    if (page.url().includes('/login')) {
-      test.skip(true, 'Browse requires auth');
-      return;
-    }
-
-    const searchBox = page.getByRole('textbox', { name: /search/i });
-    if (await searchBox.count() > 0) {
-      await searchBox.fill('Cardiac');
-      await page.waitForTimeout(500);
-      console.log('✅ Search box accepts input');
-
-      await searchBox.clear();
-      console.log('✅ Search box cleared');
-    }
-  });
-
-  test('both textbook sources visible — Pathoma and First Aid', async ({ page }) => {
-    await page.goto(`${BASE_URL}/browse`);
-    await page.waitForTimeout(2000);
-
-    if (page.url().includes('/login')) {
-      test.skip(true, 'Browse requires auth');
-      return;
-    }
-
-    await expect(page.getByRole('heading', { name: /Pathoma/i })).toBeVisible({ timeout: 5000 });
-    await expect(page.getByRole('heading', { name: /First Aid/i })).toBeVisible({ timeout: 5000 });
-    console.log('✅ Both Pathoma and First Aid chapters present');
-  });
-
-  test('clicking a chapter navigates to chat with pre-filled prompt', async ({ page }) => {
-    await page.goto(`${BASE_URL}/browse`);
-    await page.waitForTimeout(2000);
-
-    if (page.url().includes('/login')) {
-      test.skip(true, 'Browse requires auth');
-      return;
-    }
-
-    // Click first chapter
-    const firstChapter = page.getByRole('button', { name: /Ch\. 1/i }).first();
-    if (await firstChapter.count() > 0) {
-      await firstChapter.click();
-      await page.waitForTimeout(1000);
-
-      const url = page.url();
-      const hasPrompt = url.includes('/chat') && url.includes('prompt=');
-      console.log(`${hasPrompt ? '✅' : '⚠️ '} Chapter click → ${url}`);
-    }
-  });
-});
-
-// ---------------------------------------------------------------------------
 // Navigation — header links work
 // ---------------------------------------------------------------------------
 test.describe('Navigation — Authenticated App Shell', () => {
   test('all nav links are present after login', async ({ page }) => {
-    // Navigate to browse (may work without auth or may redirect)
-    await page.goto(`${BASE_URL}/browse`);
+    await page.goto(`${BASE_URL}/dashboard`);
     await page.waitForTimeout(2000);
 
     if (page.url().includes('/login')) {
@@ -249,7 +140,7 @@ test.describe('Navigation — Authenticated App Shell', () => {
     const nav = page.getByRole('navigation');
     await expect(nav).toBeVisible();
 
-    const expectedLinks = ['Dashboard', 'Browse Topics', 'Chat', 'Review'];
+    const expectedLinks = ['Dashboard', 'Chat', 'Review'];
     for (const link of expectedLinks) {
       await expect(nav.getByRole('link', { name: link })).toBeVisible();
     }
