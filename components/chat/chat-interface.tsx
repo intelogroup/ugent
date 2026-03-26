@@ -58,13 +58,13 @@ export function ChatInterface({
   // Create/get thread once user is known (only if not resuming)
   useEffect(() => {
     if (resumeThreadId) return; // Skip if resuming
-    if (!currentUser?._id || threadId) return;
+    if (!currentUser?.tokenIdentifier || threadId) return;
 
     if (chapterScope) {
       // Create a chapter-scoped thread
       const label = getChapterLabel(chapterScope);
       createChapterThread({
-        userId: currentUser._id,
+        userId: currentUser.tokenIdentifier,
         chapterScope,
         title: label,
       }).then((id) => {
@@ -72,12 +72,12 @@ export function ChatInterface({
         onThreadCreated?.(id);
       });
     } else {
-      getOrCreateThread({ userId: currentUser._id }).then((id) => {
+      getOrCreateThread({ userId: currentUser.tokenIdentifier }).then((id) => {
         setThreadId(id);
         onThreadCreated?.(id);
       });
     }
-  }, [currentUser?._id, getOrCreateThread, createChapterThread, threadId, chapterScope, resumeThreadId, onThreadCreated]);
+  }, [currentUser?.tokenIdentifier, getOrCreateThread, createChapterThread, threadId, chapterScope, resumeThreadId, onThreadCreated]);
 
   // Load persisted history — skip until threadId is resolved
   const persistedMessages = useQuery(
