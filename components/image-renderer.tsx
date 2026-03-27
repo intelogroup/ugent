@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import Image from 'next/image';
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { ImageOff } from 'lucide-react';
+import { ImageCard } from './image-card';
 
 interface ImageRendererProps {
   content: string;
@@ -60,46 +59,6 @@ function MarkdownBlock({ text }: { text: string }) {
   );
 }
 
-/**
- * Renders a single medical image with error handling.
- * Shows a fallback placeholder when the image file is missing or fails to load.
- */
-function MedicalImage({ imageId, priority }: { imageId: string; priority: boolean }) {
-  const [hasError, setHasError] = useState(false);
-
-  if (hasError) {
-    return (
-      <div className="my-4 overflow-hidden rounded-lg border border-gray-200 bg-gray-50 shadow-sm">
-        <div className="flex flex-col items-center justify-center gap-2 py-8 text-gray-400">
-          <ImageOff className="w-8 h-8" />
-          <p className="text-xs">Image not available</p>
-        </div>
-        <div className="bg-gray-50 border-t border-gray-200 p-2 text-center text-[10px] text-gray-400 font-mono">
-          REFERENCE ID: {imageId}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="my-4 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-      <div className="relative aspect-video w-full max-w-2xl mx-auto">
-        <Image
-          src={`/extracted_images/images/${imageId}.png`}
-          alt={`Textbook figure`}
-          fill
-          className="object-contain"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          priority={priority}
-          onError={() => setHasError(true)}
-        />
-      </div>
-      <div className="bg-gray-50 p-2 text-center text-[10px] text-gray-400 font-mono">
-        REFERENCE ID: {imageId}
-      </div>
-    </div>
-  );
-}
 
 const ImageRenderer: React.FC<ImageRendererProps> = ({ content }) => {
   const imageRegex = /\[Image: ([a-zA-Z0-9_-]+)\]/g;
@@ -116,7 +75,7 @@ const ImageRenderer: React.FC<ImageRendererProps> = ({ content }) => {
           return part ? <MarkdownBlock key={`text-${index}`} text={part} /> : null;
         }
         return (
-          <MedicalImage
+          <ImageCard
             key={`image-${index}`}
             imageId={part}
             priority={index < 3}
