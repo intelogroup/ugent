@@ -121,6 +121,17 @@ export function Header({ onMenuClick, onNewChat }: HeaderProps) {
 
         {/* Mobile-only compact controls */}
         <div className="flex sm:hidden items-center gap-1">
+          <Link
+            href="/history"
+            className={`p-2.5 rounded-lg transition-colors ${
+              pathname === "/history"
+                ? "bg-accent text-foreground"
+                : "hover:bg-accent text-muted-foreground"
+            }`}
+            aria-label="Chat History"
+          >
+            <Clock className="h-5 w-5" />
+          </Link>
           <button
             onClick={toggleTheme}
             className="p-2.5 hover:bg-accent rounded-lg transition-colors text-muted-foreground"

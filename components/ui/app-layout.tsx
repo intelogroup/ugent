@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Header } from "./header";
 import { Drawer } from "./drawer";
 
@@ -9,6 +10,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
+  const router = useRouter();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [chatKey, setChatKey] = useState(0);
 
@@ -17,6 +19,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const resetChat = () => {
     closeDrawer();
     setChatKey((k) => k + 1);
+    router.push('/chat');
   };
 
   return (
