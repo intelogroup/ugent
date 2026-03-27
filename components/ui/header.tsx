@@ -25,7 +25,7 @@ export function Header({ onMenuClick, onNewChat }: HeaderProps) {
         <div className="flex items-center gap-3">
           <button
             onClick={onMenuClick}
-            className="p-2 hover:bg-accent rounded-lg transition-colors"
+            className="p-2.5 hover:bg-accent rounded-lg transition-colors"
             aria-label="Toggle Menu"
           >
             <Menu className="h-5 w-5" />
@@ -36,11 +36,11 @@ export function Header({ onMenuClick, onNewChat }: HeaderProps) {
           </Link>
         </div>
 
-        {/* Nav links */}
-        <nav className="flex items-center gap-1">
+        {/* Nav links — hidden on mobile (use drawer instead) */}
+        <nav className="hidden sm:flex items-center gap-1">
           <Link
             href="/dashboard"
-            className={`p-2 rounded-lg transition-colors ${
+            className={`p-2.5 rounded-lg transition-colors ${
               pathname === "/dashboard"
                 ? "bg-accent text-foreground"
                 : "hover:bg-accent text-muted-foreground"
@@ -51,7 +51,7 @@ export function Header({ onMenuClick, onNewChat }: HeaderProps) {
           </Link>
           <Link
             href="/chat"
-            className={`p-2 rounded-lg transition-colors ${
+            className={`p-2.5 rounded-lg transition-colors ${
               pathname === "/chat"
                 ? "bg-accent text-foreground"
                 : "hover:bg-accent text-muted-foreground"
@@ -62,7 +62,7 @@ export function Header({ onMenuClick, onNewChat }: HeaderProps) {
           </Link>
           <Link
             href="/history"
-            className={`p-2 rounded-lg transition-colors ${
+            className={`p-2.5 rounded-lg transition-colors ${
               pathname === "/history"
                 ? "bg-accent text-foreground"
                 : "hover:bg-accent text-muted-foreground"
@@ -73,7 +73,7 @@ export function Header({ onMenuClick, onNewChat }: HeaderProps) {
           </Link>
           <Link
             href="/review"
-            className={`p-2 rounded-lg transition-colors ${
+            className={`p-2.5 rounded-lg transition-colors ${
               pathname === "/review"
                 ? "bg-accent text-foreground"
                 : "hover:bg-accent text-muted-foreground"
@@ -84,7 +84,7 @@ export function Header({ onMenuClick, onNewChat }: HeaderProps) {
           </Link>
           <Link
             href="/quiz"
-            className={`p-2 rounded-lg transition-colors ${
+            className={`p-2.5 rounded-lg transition-colors ${
               pathname === "/quiz"
                 ? "bg-accent text-foreground"
                 : "hover:bg-accent text-muted-foreground"
@@ -95,7 +95,7 @@ export function Header({ onMenuClick, onNewChat }: HeaderProps) {
           </Link>
           <button
             onClick={() => setShowBotConnect(true)}
-            className="p-2 hover:bg-accent rounded-lg transition-colors text-muted-foreground"
+            className="p-2.5 hover:bg-accent rounded-lg transition-colors text-muted-foreground"
             aria-label="Connect Bot"
             title="Connect Telegram or WhatsApp"
           >
@@ -105,19 +105,37 @@ export function Header({ onMenuClick, onNewChat }: HeaderProps) {
           <NotificationBell />
           <button
             onClick={toggleTheme}
-            className="p-2 hover:bg-accent rounded-lg transition-colors text-muted-foreground"
+            className="p-2.5 hover:bg-accent rounded-lg transition-colors text-muted-foreground"
             aria-label="Toggle dark mode"
           >
             {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </button>
           <button
             onClick={onNewChat}
-            className="p-2 hover:bg-accent rounded-lg transition-colors"
+            className="p-2.5 hover:bg-accent rounded-lg transition-colors"
             aria-label="New Chat"
           >
             <SquarePen className="h-5 w-5" />
           </button>
         </nav>
+
+        {/* Mobile-only compact controls */}
+        <div className="flex sm:hidden items-center gap-1">
+          <button
+            onClick={toggleTheme}
+            className="p-2.5 hover:bg-accent rounded-lg transition-colors text-muted-foreground"
+            aria-label="Toggle dark mode"
+          >
+            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
+          <button
+            onClick={onNewChat}
+            className="p-2.5 hover:bg-accent rounded-lg transition-colors"
+            aria-label="New Chat"
+          >
+            <SquarePen className="h-5 w-5" />
+          </button>
+        </div>
       </div>
       {showBotConnect && <BotConnectModal onClose={() => setShowBotConnect(false)} />}
     </header>

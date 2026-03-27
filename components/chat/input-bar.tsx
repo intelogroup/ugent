@@ -29,10 +29,10 @@ export function InputBar({ input, handleInputChange, handleSubmit, isLoading }: 
   };
 
   return (
-    <div className="bg-white p-4">
+    <div className="bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
       <form
         onSubmit={handleSubmit}
-        className="flex items-center gap-2 p-1.5 bg-white border border-gray-100 rounded-3xl shadow-sm max-w-4xl mx-auto"
+        className="flex items-center gap-2 p-1.5 bg-white border border-gray-100 rounded-3xl shadow-sm w-full max-w-4xl mx-auto"
       >
         <button
           type="button"

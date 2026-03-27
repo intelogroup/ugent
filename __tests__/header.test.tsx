@@ -39,7 +39,7 @@ describe('Header Component', () => {
     const onNewChat = vi.fn()
     render(<Header onMenuClick={() => {}} onNewChat={onNewChat} />)
 
-    const newChatButton = screen.getByLabelText('New Chat')
+    const newChatButton = screen.getAllByLabelText('New Chat')[0]
     fireEvent.click(newChatButton)
 
     expect(onNewChat).toHaveBeenCalledTimes(1)

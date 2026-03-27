@@ -106,7 +106,7 @@ export function Drawer({ isOpen, onClose, onNewChat }: DrawerProps) {
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed left-0 top-0 z-[70] h-full w-4/5 max-w-sm bg-background border-r shadow-2xl flex flex-col"
+            className="fixed left-0 top-0 z-[70] h-full w-4/5 max-w-[320px] bg-background border-r shadow-2xl flex flex-col"
           >
             <div className="flex h-14 items-center justify-between px-4 border-b">
               <span className="font-bold text-lg tracking-tight">UGent MedBot</span>
@@ -119,7 +119,7 @@ export function Drawer({ isOpen, onClose, onNewChat }: DrawerProps) {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+            <div className="flex-1 overflow-y-auto overscroll-contain py-4 px-2 sm:px-3 space-y-6">
               {/* Navigation */}
               <section className="space-y-1">
                 <button
