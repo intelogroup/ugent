@@ -64,14 +64,20 @@ def chunk_markdown(content, book_name, image_mapper=None, max_tokens=512):
         subsection_match = re.match(r'^###\s+(.*)', line)
         # SECTION markers from plan
         section_marker_match = re.match(r'^SECTION\s+(.*)', line)
-        
+        # Roman numeral sections (e.g. "VIII. COMPLEMENT DEFICIENCIES") and
+        # capital-letter sub-items (e.g. "B. Cl inhibitor deficiency") used in
+        # Pathoma plain-text structure — not markdown headers, but each
+        # represents a distinct topic and must get its own chunk.
+        roman_section_match = re.match(r'^([IVX]{1,6})\.\s+(.+)$', line)
+        letter_item_match = re.match(r'^([A-Z])\.\s+(.+)$', line)
+
         if chapter_match:
             finalize_chunk()
             current_chapter = chapter_match.group(1).strip()
             current_section = None
             current_subsection = None
             continue
-            
+
         if section_match or section_marker_match:
             finalize_chunk()
             current_section = (section_match or section_marker_match).group(1).strip()
@@ -81,6 +87,17 @@ def chunk_markdown(content, book_name, image_mapper=None, max_tokens=512):
         if subsection_match:
             finalize_chunk()
             current_subsection = subsection_match.group(1).strip()
+            continue
+
+        if roman_section_match:
+            finalize_chunk()
+            current_subsection = f"{roman_section_match.group(1)}. {roman_section_match.group(2).strip()}"
+            current_chunk_lines.append(line)
+            continue
+
+        if letter_item_match:
+            finalize_chunk()
+            current_chunk_lines.append(line)
             continue
             
         # Image detection

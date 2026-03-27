@@ -2,10 +2,10 @@ import os
 import json
 import time
 import hashlib
-from typing import List, Dict
+import argparse
+from typing import List
 from dotenv import load_dotenv
 from openai import OpenAI
-from tqdm import tqdm
 from pinecone_init import get_pinecone_index
 from chunker import chunk_markdown
 from image_mapper import ImageMapper
@@ -58,10 +58,18 @@ def save_checkpoint(last_book, last_file, last_chunk_index):
         }, f)
 
 def main():
+    parser = argparse.ArgumentParser(description="Embed books into Pinecone")
+    parser.add_argument(
+        "--namespace",
+        choices=["first-aid-2023", "pathoma-2021"],
+        help="Only process this namespace (omit to process all)"
+    )
+    args = parser.parse_args()
+
     index = get_pinecone_index()
     image_mapper = ImageMapper(os.path.abspath("extracted_images/metadata.json"))
-    
-    books = [
+
+    all_books = [
         {
             "name": "First Aid for the USMLE Step 1 2023",
             "dir": "scraped_first_aid_final",
@@ -73,7 +81,9 @@ def main():
             "namespace": "pathoma-2021"
         }
     ]
-    
+
+    books = [b for b in all_books if not args.namespace or b["namespace"] == args.namespace]
+
     checkpoint = load_checkpoint()
     last_book = checkpoint.get("last_book")
     last_file = checkpoint.get("last_file")
