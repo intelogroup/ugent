@@ -62,9 +62,11 @@ export async function POST(req: Request) {
       ? lastMessage.content
       : (lastMessage.content as any[]).map((p: any) => p.text ?? '').join(' ');
 
-    // Fetch context and images in parallel
+    // Fetch context and images in parallel.
+    // HyDE=true: generates a hypothetical textbook passage before embedding,
+    // lifting cosine scores for vague/clinical queries (see lib/pinecone.ts).
     const [context, imageResults] = await Promise.all([
-      getContext(userQuery, undefined, true),
+      getContext(userQuery, undefined, true, true),
       getImages(userQuery, 2),
     ]);
     const topScore = (context[0] as any)?.score ?? 0;

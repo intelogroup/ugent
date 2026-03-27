@@ -114,6 +114,42 @@ export function expandChapterQuery(query: string): string {
   return query;
 }
 
+// ─── HyDE — Hypothetical Document Embeddings ──────────────────────────────────
+// Instead of embedding the raw user query, ask a small/fast LLM to write a
+// short hypothetical Pathoma/First Aid passage that *would* answer the query,
+// then embed that passage. Because the hypothetical uses textbook vocabulary
+// it sits much closer in vector space to real chunks → higher cosine scores.
+//
+// Model: gpt-4o-mini — cheap (<$0.001 per call) and fast (~200ms).
+// Falls back to raw query if the HyDE call fails so retrieval is never blocked.
+
+const HYDE_SYSTEM = `You are a medical textbook author writing in the style of Pathoma and First Aid for the USMLE Step 1.
+Given a medical question or topic, write a focused 80-120 word textbook passage that directly covers the key facts, mechanisms, and clinical features.
+Use precise medical terminology. Do not include headers. Output only the passage text.`;
+
+let _hydeClient: import('openai').default | null = null;
+
+async function generateHypotheticalDocument(query: string): Promise<string> {
+  try {
+    if (!_hydeClient) {
+      const OpenAI = (await import('openai')).default;
+      _hydeClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    }
+    const resp = await _hydeClient.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: HYDE_SYSTEM },
+        { role: 'user', content: query },
+      ],
+      temperature: 0,
+      max_tokens: 160,
+    });
+    return resp.choices[0]?.message?.content?.trim() ?? query;
+  } catch {
+    return query; // graceful fallback to raw query
+  }
+}
+
 let pc: Pinecone | null = null;
 
 function getPineconeClient() {
@@ -200,6 +236,7 @@ export async function getContext(
   query: string,
   namespaces: string[] = ['first-aid-2023', 'pathoma-2021'],
   returnScores = false,
+  useHyDE = false,
 ): Promise<ChunkMetadata[]> {
   try {
     const client = getPineconeClient();
@@ -212,10 +249,16 @@ export async function getContext(
     // 1. Expand structural queries ("chapter 1") to include the actual chapter title
     const expandedQuery = expandChapterQuery(query);
 
-    // 2. Vectorize the (possibly expanded) query
-    const queryEmbedding = await getEmbedding(expandedQuery);
+    // 2. Optionally apply HyDE: generate a hypothetical textbook passage and
+    //    embed that instead of the raw query. Falls back to expandedQuery on error.
+    const queryToEmbed = useHyDE
+      ? await generateHypotheticalDocument(expandedQuery)
+      : expandedQuery;
 
-    // 3. Query each namespace in parallel — fetch topK=10 per namespace so the
+    // 3. Vectorize
+    const queryEmbedding = await getEmbedding(queryToEmbed);
+
+    // 4. Query each namespace in parallel — fetch topK=10 per namespace so the
     //    score-threshold filter + global top-7 slice have enough candidates.
     const index = client.index(indexName);
 
@@ -233,7 +276,7 @@ export async function getContext(
 
     const results = await Promise.all(queryPromises);
 
-    // 4. Flatten, apply score threshold (client-side per docs), sort, take top 7
+    // 5. Flatten, apply score threshold (client-side per docs), sort, take top 7
     const filtered = results
       .flat()
       .filter(r => r.score >= MIN_SCORE_THRESHOLD)

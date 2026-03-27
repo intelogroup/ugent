@@ -110,8 +110,9 @@ export async function POST(req: Request) {
       priorMessages = recent.map((m: any) => ({ role: m.role, content: m.content }));
     }
 
-    // RAG retrieval
-    const context = await getContext(userQuery, undefined, true);
+    // RAG retrieval — HyDE enabled: generates a hypothetical textbook passage
+    // before embedding, matching chat API behaviour (see lib/pinecone.ts).
+    const context = await getContext(userQuery, undefined, true, true);
     const topScore = (context[0] as any)?.score ?? 0;
     const contextFound = context.length > 0;
 
