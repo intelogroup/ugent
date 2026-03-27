@@ -17,7 +17,7 @@ load_dotenv()
 CHECKPOINT_FILE = "checkpoint.json"
 BATCH_SIZE = 100
 EMBEDDING_MODEL = "text-embedding-3-large"
-DIMENSIONS = 3072
+DIMENSIONS = 1024  # must match openai.ts getEmbedding() and the Pinecone index dimension
 
 # Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
