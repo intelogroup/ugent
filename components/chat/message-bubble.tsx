@@ -1,7 +1,7 @@
 'use client';
 
 import { Message } from 'ai';
-import { Bot, AlertCircle, Volume2, VolumeX, ImageOff, Bookmark } from 'lucide-react';
+import { Bot, AlertCircle, Volume2, VolumeX, Bookmark } from 'lucide-react';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import ImageRenderer from '../image-renderer';
 import { cleanForSpeech } from '@/lib/clean-for-speech';
 import { SourceCitations, type SourceInfo } from './source-citations';
+import { ImageCard, type ImageMeta } from '../image-card';
 import type { Id } from '@/convex/_generated/dataModel';
 
 interface MessageBubbleProps {
@@ -155,37 +156,6 @@ function BookmarkButton({ messageId }: { messageId: string }) {
   );
 }
 
-/**
- * Renders an image from annotation data with error fallback for missing files.
- */
-function AnnotationImage({ imageId }: { imageId: string }) {
-  const [hasError, setHasError] = useState(false);
-
-  if (hasError) {
-    return (
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50 shadow-sm">
-        <div className="flex flex-col items-center justify-center gap-2 py-6 text-gray-400">
-          <ImageOff className="w-6 h-6" />
-          <p className="text-xs">Image not available</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-      <div className="relative w-full max-w-2xl mx-auto">
-        <img
-          src={`/extracted_images/images/${imageId}.png`}
-          alt="Textbook figure"
-          className="w-full h-auto object-contain"
-          loading="lazy"
-          onError={() => setHasError(true)}
-        />
-      </div>
-    </div>
-  );
-}
 
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user';
@@ -195,7 +165,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const contextStatus = annotations?.find((a: any) => a.context_found !== undefined);
   const contextFound = contextStatus ? contextStatus.context_found : true;
   const isContextMissing = !isUser && contextFound === false;
-  const imageIds: string[] = contextStatus?.images ?? [];
+  type AnnotationImage = { image_id: string } & ImageMeta;
+  const annotationImages: AnnotationImage[] = contextStatus?.images ?? [];
   const sources: SourceInfo[] = contextStatus?.sources ?? [];
 
   return (
@@ -235,11 +206,25 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           ) : (
             <>
               <ImageRenderer content={message.content} />
-              {imageIds.length > 0 && (
+              {annotationImages.length > 0 && (
                 <div className="mt-4 flex flex-col gap-3">
-                  {imageIds.map((imageId) => (
-                    <AnnotationImage key={imageId} imageId={imageId} />
-                  ))}
+                  {annotationImages.map((img) => {
+                    // Backwards compat: old messages stored images as bare string IDs.
+                    // New messages store full metadata objects. Handle both gracefully.
+                    const imageId = typeof img === 'string' ? img : img.image_id;
+                    const meta = typeof img === 'string' ? undefined : {
+                      caption: img.caption,
+                      source_book: img.source_book,
+                      page_number: img.page_number,
+                    };
+                    return (
+                      <ImageCard
+                        key={imageId}
+                        imageId={imageId}
+                        meta={meta}
+                      />
+                    );
+                  })}
                 </div>
               )}
               {sources.length > 0 && (
