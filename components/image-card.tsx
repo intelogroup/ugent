@@ -20,7 +20,7 @@ interface ImageCardProps {
 export function ImageCard({ imageId, meta, priority = false }: ImageCardProps) {
   const [hasError, setHasError] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const src = `https://media.githubusercontent.com/media/intelogroup/ugent/main/public/extracted_images/images/${imageId}.png`;
+  const src = `https://raw.githubusercontent.com/intelogroup/ugent/main/public/extracted_images/images/${imageId}.png`;
 
   if (hasError) {
     return (

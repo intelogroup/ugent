@@ -7,8 +7,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'media.githubusercontent.com',
-        pathname: '/media/intelogroup/ugent/main/public/extracted_images/images/**',
+        hostname: 'raw.githubusercontent.com',
+        pathname: '/intelogroup/ugent/main/public/extracted_images/images/**',
       },
     ],
   },
