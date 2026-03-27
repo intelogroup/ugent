@@ -135,8 +135,13 @@ async function generateHypotheticalDocument(query: string): Promise<string> {
       const OpenAI = (await import('openai')).default;
       _hydeClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     }
+    // HYDE_MODEL env var lets you A/B without redeploying:
+    //   gpt-4o-mini  — fast, cheap, good for common conditions (default)
+    //   gpt-4o       — better accuracy on rare/complex conditions
+    //   gpt-4.1      — if available: similar quality to 4o, often faster
+    const hydeModel = process.env.HYDE_MODEL ?? 'gpt-4o-mini';
     const resp = await _hydeClient.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: hydeModel,
       messages: [
         { role: 'system', content: HYDE_SYSTEM },
         { role: 'user', content: query },

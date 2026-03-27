@@ -30,10 +30,13 @@ load_dotenv(".env.local")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--hyde", action="store_true", help="Enable HyDE (Hypothetical Document Embeddings)")
+parser.add_argument("--hyde-model", default=None,
+                    help="Model for HyDE generation (default: HYDE_MODEL env var or gpt-4o-mini)")
 parser.add_argument("--judge-only", action="store_true", help="Skip main eval, run only LLM-as-judge on gray zone")
 args = parser.parse_args()
 
 USE_HYDE = args.hyde
+HYDE_MODEL = args.hyde_model or os.getenv("HYDE_MODEL", "gpt-4o-mini")
 
 # ── Constants matching the TypeScript app ────────────────────────────────────
 EMBEDDING_MODEL = "text-embedding-3-large"
@@ -180,7 +183,7 @@ def generate_hypothetical_document(query: str) -> str:
     """Generate a hypothetical textbook passage for HyDE retrieval."""
     try:
         resp = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=HYDE_MODEL,
             messages=[
                 {"role": "system", "content": HYDE_SYSTEM},
                 {"role": "user", "content": query},
@@ -236,7 +239,7 @@ summary = []
 category_results: dict[str, list] = {}
 
 print("\n" + "═" * 80)
-print(f"RETRIEVAL EVALUATION  {'[HyDE ENABLED]' if USE_HYDE else '[standard]'}")
+print(f"RETRIEVAL EVALUATION  {'[HyDE: ' + HYDE_MODEL + ']' if USE_HYDE else '[standard]'}")
 print("═" * 80)
 
 for query, scope, label, category in QUERIES:
