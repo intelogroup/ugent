@@ -90,6 +90,27 @@ export function expandChapterQuery(query: string): string {
     return `${query} ${chapterMap[chapterNum]}`;
   }
 
+  // Clinical synonym expansion — maps common clinical terms to the mechanism/
+  // descriptor language used in the textbook embeddings, boosting recall for
+  // conditions whose section titles don't match the query term directly.
+  const CLINICAL_EXPANSIONS: Array<[RegExp, string]> = [
+    [/hereditary angioedema/i, 'C1 inhibitor complement deficiency bradykinin edema swelling'],
+    [/\bhae\b/i,               'hereditary angioedema C1 inhibitor complement deficiency'],
+    [/nephrotic syndrome/i,    'proteinuria hypoalbuminemia edema glomerular filtration barrier'],
+    [/nephritic syndrome/i,    'hematuria hypertension azotemia GFR glomerulonephritis'],
+    [/goodpasture/i,           'anti-GBM antibody type II hypersensitivity pulmonary renal syndrome'],
+    [/sle lupus nephritis/i,   'immune complex deposition complement anti-dsDNA glomerular'],
+    [/minimal change disease/i,'podocyte foot process fusion nephrotic proteinuria children'],
+    [/berry aneurysm/i,        'saccular aneurysm subarachnoid hemorrhage circle of Willis'],
+    [/prinzmetal/i,            'vasospasm coronary artery angina variant'],
+  ];
+
+  for (const [pattern, expansion] of CLINICAL_EXPANSIONS) {
+    if (pattern.test(lower)) {
+      return `${query} ${expansion}`;
+    }
+  }
+
   return query;
 }
 

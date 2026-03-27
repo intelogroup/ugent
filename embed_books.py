@@ -84,6 +84,17 @@ def main():
 
     books = [b for b in all_books if not args.namespace or b["namespace"] == args.namespace]
 
+    # Files that produce noise chunks (indexes, image credits, frontmatter).
+    # These pollute rankings because their content is structural, not educational.
+    SKIP_FILES = {
+        # Pathoma
+        "Chapter_20_Index.md",
+        # First Aid
+        "21_Index.md",
+        "20_Image_Acknowledgments.md",
+        "00_Frontmatter.md",
+    }
+
     checkpoint = load_checkpoint()
     last_book = checkpoint.get("last_book")
     last_file = checkpoint.get("last_file")
@@ -99,7 +110,7 @@ def main():
             else:
                 continue
                 
-        files = sorted([f for f in os.listdir(book["dir"]) if f.endswith(".md")])
+        files = sorted([f for f in os.listdir(book["dir"]) if f.endswith(".md") and f not in SKIP_FILES])
         
         found_last_file = False if last_file and book["name"] == last_book else True
         
