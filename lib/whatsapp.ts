@@ -66,8 +66,39 @@ export async function sendWhatsAppFactsToAll(facts: Fact[]): Promise<void> {
   await Promise.allSettled(
     recipients.map((to) =>
       sendWhatsAppFacts(facts, to).catch((err) =>
-        console.error(`[whatsapp] Failed to send to ${to}:`, err)
+        console.error('[whatsapp] Failed to send to recipient:', to, err)
       )
     )
   );
+}
+
+/**
+ * Send a plain-text reply to a WhatsApp user.
+ * Used by the webhook handler to reply to incoming messages.
+ */
+export async function sendWhatsAppMessage(to: string, text: string): Promise<void> {
+  const token = process.env.WHATSAPP_TOKEN;
+  if (!token) {
+    console.warn('[whatsapp] WHATSAPP_TOKEN not set — skipping reply');
+    return;
+  }
+
+  const res = await fetch(getApiUrl(), {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      messaging_product: 'whatsapp',
+      to,
+      type: 'text',
+      text: { body: text, preview_url: false },
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`[whatsapp] reply API error: ${JSON.stringify(err)}`);
+  }
 }
