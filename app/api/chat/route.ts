@@ -92,7 +92,12 @@ export async function POST(req: Request) {
       context_found: contextFound,
       model_used: reason,
       top_score: topScore,
-      images: imageResults.map(img => img.image_id),
+      images: imageResults.map(img => ({
+        image_id: img.image_id,
+        caption: img.caption,
+        source_book: img.source_book,
+        page_number: img.page_number,
+      })),
       sources,
     });
 
