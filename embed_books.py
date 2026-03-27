@@ -11,7 +11,7 @@ from chunker import chunk_markdown
 from image_mapper import ImageMapper
 
 # Load environment variables
-load_dotenv()
+load_dotenv(".env.local")
 
 # Constants
 CHECKPOINT_FILE = "checkpoint.json"
