@@ -19,6 +19,15 @@ BATCH_SIZE = 100
 EMBEDDING_MODEL = "text-embedding-3-large"
 DIMENSIONS = 1024  # must match openai.ts getEmbedding() and the Pinecone index dimension
 
+# Files that produce noise chunks (indexes, image credits, frontmatter).
+# These pollute rankings because their content is structural, not educational.
+SKIP_FILES = {
+    "Chapter_20_Index.md",        # Pathoma
+    "21_Index.md",                # First Aid
+    "20_Image_Acknowledgments.md",
+    "00_Frontmatter.md",
+}
+
 # Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -83,17 +92,6 @@ def main():
     ]
 
     books = [b for b in all_books if not args.namespace or b["namespace"] == args.namespace]
-
-    # Files that produce noise chunks (indexes, image credits, frontmatter).
-    # These pollute rankings because their content is structural, not educational.
-    SKIP_FILES = {
-        # Pathoma
-        "Chapter_20_Index.md",
-        # First Aid
-        "21_Index.md",
-        "20_Image_Acknowledgments.md",
-        "00_Frontmatter.md",
-    }
 
     checkpoint = load_checkpoint()
     last_book = checkpoint.get("last_book")

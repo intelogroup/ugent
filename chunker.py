@@ -70,6 +70,12 @@ def chunk_markdown(content, book_name, image_mapper=None, max_tokens=512):
         # represents a distinct topic and must get its own chunk.
         roman_section_match = re.match(r'^([IVX]{1,6})\.\s+(.+)$', line)
         letter_item_match = re.match(r'^([A-Z])\.\s+(.+)$', line)
+        # All-caps section headers (e.g. "NEPHROTIC SYNDROME", "HODGKIN LYMPHOMA")
+        # used in Pathoma as major topic dividers — must contain a space so single
+        # abbreviations (HIV, DNA) are not mistakenly treated as headers.
+        allcaps_section_match = (
+            re.match(r'^[A-Z][A-Z\s\(\)\-\/\.]{5,}$', line) and ' ' in line
+        )
 
         if chapter_match:
             finalize_chunk()
@@ -87,6 +93,13 @@ def chunk_markdown(content, book_name, image_mapper=None, max_tokens=512):
         if subsection_match:
             finalize_chunk()
             current_subsection = subsection_match.group(1).strip()
+            continue
+
+        if allcaps_section_match:
+            finalize_chunk()
+            current_section = line.strip()
+            current_subsection = None
+            current_chunk_lines.append(line)
             continue
 
         if roman_section_match:
