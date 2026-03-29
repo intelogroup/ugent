@@ -64,9 +64,9 @@ export default function BookmarksPage() {
       ) : (
         <div className="space-y-3">
           {(bookmarks as Array<{
-            _id: Id<"messages">;
-            messageId: Id<"messages">;
-            threadId: Id<"threads">;
+            _id: string;
+            messageId: string;
+            threadId: string;
             question?: string;
             answer: string;
             createdAt: number;
@@ -99,7 +99,7 @@ export default function BookmarksPage() {
                 </button>
                 <button
                   onClick={() =>
-                    toggleBookmark({ messageId: bm.messageId })
+                    toggleBookmark({ messageId: bm.messageId as Id<"messages"> })
                   }
                   className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-red-500 transition-colors"
                   title="Remove bookmark"
