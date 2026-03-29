@@ -3,10 +3,7 @@
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { useQuery } from "convex/react";
-import { useAuth } from "@workos-inc/authkit-nextjs/components";
-import { api } from "@/convex/_generated/api";
-import { X, MessageSquare, Settings, Monitor, SquarePen, Home, Search, BookOpen, Layers, ChevronDown, ChevronRight, Bot, Clock, BrainCircuit } from "lucide-react";
+import { X, MessageSquare, Settings, Monitor, SquarePen, Home, Search, BookOpen, Layers, ChevronDown, ChevronRight, BrainCircuit, Bookmark } from "lucide-react";
 
 interface DrawerProps {
   isOpen: boolean;
@@ -57,28 +54,8 @@ const FIRST_AID_CHAPTERS = [
   "Respiratory",
 ];
 
-function formatTimeAgo(timestamp: number): string {
-  const now = Date.now();
-  const diffMs = now - timestamp;
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1) return "just now";
-  if (diffMin < 60) return `${diffMin}m ago`;
-  const diffHours = Math.floor(diffMin / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return new Date(timestamp).toLocaleDateString();
-}
-
 export function Drawer({ isOpen, onClose, onNewChat }: DrawerProps) {
   const router = useRouter();
-  const { user } = useAuth();
-  const isAuthenticated = !!user;
-  const currentUser = useQuery(api.users.getCurrentUser);
-  const recentThreads = useQuery(
-    api.threads.listRecentThreadsWithPreview,
-    currentUser?._id ? { userId: currentUser._id, limit: 8 } : "skip"
-  );
   const [pathomaOpen, setPathomaOpen] = useState(false);
   const [firstAidOpen, setFirstAidOpen] = useState(false);
 
@@ -135,6 +112,13 @@ export function Drawer({ isOpen, onClose, onNewChat }: DrawerProps) {
                 >
                   <Search className="h-4 w-4 text-muted-foreground" />
                   <span>Browse Topics</span>
+                </button>
+                <button
+                  onClick={() => navigateTo("/bookmarks")}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium hover:bg-accent rounded-lg transition-colors"
+                >
+                  <Bookmark className="h-4 w-4 text-muted-foreground" />
+                  <span>Saved Answers</span>
                 </button>
                 <button
                   onClick={() => navigateTo("/review")}

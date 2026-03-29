@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu, Bot, SquarePen, Home, MessageSquare, Layers, Clock, Sun, Moon, Link2, BrainCircuit } from "lucide-react";
+import { Menu, Bot, SquarePen, Home, MessageSquare, Layers, Clock, Sun, Moon, Link2, BrainCircuit, Bookmark } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { WhatsAppSubscribe } from "@/components/whatsapp/whatsapp-subscribe";
 import { BotConnectModal } from "@/components/onboarding/bot-connect-modal";
@@ -70,6 +70,17 @@ export function Header({ onMenuClick, onNewChat }: HeaderProps) {
             aria-label="Chat History"
           >
             <Clock className="h-5 w-5" />
+          </Link>
+          <Link
+            href="/bookmarks"
+            className={`p-2.5 rounded-lg transition-colors ${
+              pathname === "/bookmarks"
+                ? "bg-accent text-foreground"
+                : "hover:bg-accent text-muted-foreground"
+            }`}
+            aria-label="Bookmarks"
+          >
+            <Bookmark className="h-5 w-5" />
           </Link>
           <Link
             href="/review"
