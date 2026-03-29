@@ -47,6 +47,8 @@ export function ChatInterface({
   const [threadId, setThreadId] = useState<Id<"threads"> | null>(null);
   const [initialPromptSent, setInitialPromptSent] = useState(false);
   const [streamError, setStreamError] = useState<string | null>(null);
+  const [isStalled, setIsStalled] = useState(false);
+  const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // If resuming a thread, use that directly
   useEffect(() => {
@@ -107,7 +109,7 @@ export function ChatInterface({
     },
     onResponse: () => setStreamError(null),
     onFinish: async (message) => {
-      if (!threadId) return;
+      if (!threadId || !message.content?.trim()) return;
       await addMessage({
         threadId,
         role: 'assistant',
@@ -118,6 +120,17 @@ export function ChatInterface({
       });
     },
   });
+
+  // Stall detection: show a banner if the stream hasn't finished in 20s
+  useEffect(() => {
+    if (isLoading) {
+      stallTimerRef.current = setTimeout(() => setIsStalled(true), 20_000);
+    } else {
+      if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
+      setIsStalled(false);
+    }
+    return () => { if (stallTimerRef.current) clearTimeout(stallTimerRef.current); };
+  }, [isLoading]);
 
   // Auto-send prompt from URL query param (e.g., from browse page)
   const promptParam = searchParams?.get("prompt");
@@ -234,6 +247,9 @@ export function ChatInterface({
         )}
       </div>
 
+      {isStalled && !streamError && (
+        <p className="text-xs text-amber-500 text-center px-4 py-1">This is taking longer than usual — still working…</p>
+      )}
       {streamError && (
         <p className="text-xs text-destructive text-center px-4 py-1">{streamError}</p>
       )}

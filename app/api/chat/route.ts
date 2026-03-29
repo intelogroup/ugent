@@ -1,6 +1,6 @@
 import { openai } from '@ai-sdk/openai';
 import { streamText, StreamData, CoreMessage } from 'ai';
-import { getContext, getImages } from '@/lib/pinecone';
+import { getContext, getImages, type ChunkMetadata, type ImageResult } from '@/lib/pinecone';
 import { withAuth } from '@workos-inc/authkit-nextjs';
 import { z } from 'zod';
 
@@ -15,6 +15,8 @@ const chatRequestSchema = z.object({
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
+
+const RAG_TIMEOUT_MS = 8000;
 
 /**
  * Model routing based on retrieval confidence.
@@ -62,12 +64,20 @@ export async function POST(req: Request) {
       ? lastMessage.content
       : (lastMessage.content as any[]).map((p: any) => p.text ?? '').join(' ');
 
-    // Fetch context and images in parallel.
+    // Fetch context and images in parallel, with an 8s timeout.
     // HyDE=true: generates a hypothetical textbook passage before embedding,
     // lifting cosine scores for vague/clinical queries (see lib/pinecone.ts).
-    const [context, imageResults] = await Promise.all([
-      getContext(userQuery, undefined, true, true),
-      getImages(userQuery, 2),
+    // If Pinecone is slow, fall back to empty context and stream immediately.
+    let ragTimedOut = false;
+    const ragTimeout = new Promise<[ChunkMetadata[], ImageResult[]]>((resolve) =>
+      setTimeout(() => { ragTimedOut = true; resolve([[], []]); }, RAG_TIMEOUT_MS)
+    );
+    const [context, imageResults] = await Promise.race([
+      Promise.all([
+        getContext(userQuery, undefined, true, true),
+        getImages(userQuery, 2),
+      ]),
+      ragTimeout,
     ]);
     const topScore = (context[0] as any)?.score ?? 0;
     const contextFound = context.length > 0;
@@ -75,7 +85,7 @@ export async function POST(req: Request) {
     const { model, reason } = selectModel(topScore);
 
     // Strip scores before injecting into the prompt
-    const cleanContext = context.map(({ score, ...chunk }) => chunk);
+    const cleanContext = context.map(({ score: _score, ...chunk }) => chunk);
 
     // Deduplicate sources for citation display (book + chapter pairs)
     const sources = contextFound
@@ -92,6 +102,7 @@ export async function POST(req: Request) {
       context_found: contextFound,
       model_used: reason,
       top_score: topScore,
+      rag_timed_out: ragTimedOut,
       images: imageResults.map(img => ({
         image_id: img.image_id,
         caption: img.caption,
