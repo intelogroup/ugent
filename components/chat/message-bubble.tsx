@@ -14,6 +14,7 @@ import type { Id } from '@/convex/_generated/dataModel';
 
 interface MessageBubbleProps {
   message: Message;
+  convexId?: Id<"messages">;
 }
 
 type PlayState = 'idle' | 'speaking';
@@ -158,7 +159,7 @@ function BookmarkButton({ messageId }: { messageId: string }) {
 }
 
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({ message, convexId }: MessageBubbleProps) {
   const isUser = message.role === 'user';
 
   // Extract metadata from message annotations (set via data.appendMessageAnnotation on server)
@@ -235,7 +236,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                 {message.content.length > 20 && (
                   <VoiceButton text={message.content} />
                 )}
-                <BookmarkButton messageId={message.id} />
+                <BookmarkButton messageId={convexId ?? message.id} />
               </div>
             </>
           )}

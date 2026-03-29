@@ -49,6 +49,9 @@ export function ChatInterface({
   const [streamError, setStreamError] = useState<string | null>(null);
   const [isStalled, setIsStalled] = useState(false);
   const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Maps AI SDK message IDs → Convex message IDs so BookmarkButton works on new messages
+  const convexIdMapRef = useRef<Map<string, Id<"messages">>>(new Map());
+  const [, forceUpdate] = useState(0);
 
   // If resuming a thread, use that directly
   useEffect(() => {
@@ -110,7 +113,7 @@ export function ChatInterface({
     onResponse: () => setStreamError(null),
     onFinish: async (message) => {
       if (!threadId || !message.content?.trim()) return;
-      await addMessage({
+      const convexId = await addMessage({
         threadId,
         role: 'assistant',
         content: typeof message.content === 'string'
@@ -118,6 +121,8 @@ export function ChatInterface({
           : JSON.stringify(message.content),
         imageAnnotations: (message.annotations as any[]) ?? undefined,
       });
+      convexIdMapRef.current.set(message.id, convexId);
+      forceUpdate(n => n + 1);
     },
   });
 
@@ -224,7 +229,11 @@ export function ChatInterface({
         ) : (
           <div className="max-w-3xl mx-auto w-full">
             {messages.map((message) => (
-              <MessageBubble key={message.id} message={message} />
+              <MessageBubble
+                key={message.id}
+                message={message}
+                convexId={convexIdMapRef.current.get(message.id)}
+              />
             ))}
             {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
               <div className="flex w-full mb-6 justify-start animate-in fade-in duration-300">
