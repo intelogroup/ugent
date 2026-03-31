@@ -19,7 +19,13 @@ If a requested change conflicts with scope.md, say so and stop.
 - Frontend in `ugent-app/` is a separate repo — do not modify it from here
 
 ## Test Requirement
-Run `npm test` — all 37 tests must pass. No regressions allowed.
+Run `npm test` — all 192 tests must pass. No regressions allowed.
+
+## Browser / Playwright Testing Rule
+After EVERY `browser_navigate` or page-level test using Playwright MCP tools:
+1. Call `browser_console_messages` (level: error) — report error count
+2. Call `browser_take_screenshot` — show the screenshot
+Both are mandatory. Never report a page as healthy without evidence from both.
 
 ## Deploy Configuration (configured by /setup-deploy)
 - Platform: Vercel

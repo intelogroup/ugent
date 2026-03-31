@@ -117,7 +117,7 @@ export async function POST(req: Request) {
     const contextFound = context.length > 0;
 
     const { model } = selectModel(topScore);
-    const cleanContext = context.map(({ score, ...chunk }: any) => chunk);
+    const cleanContext = context.map(({ score: _score, ...chunk }: any) => chunk);
 
     const contextString = contextFound
       ? cleanContext

@@ -53,9 +53,6 @@ function buildVapidAuthHeader(
 
   // Node's createSign with EC key needs a PEM or KeyObject
   // We construct a SEC1 PEM from the raw 32-byte private key scalar
-  const seq = Buffer.concat([
-    Buffer.from("3077020101042", "hex").slice(0, -1), // incomplete — see below
-  ]);
   // Build raw DER for EC PRIVATE KEY (SEC1) manually
   const ecPrivKeyDer = buildSec1Der(privateKeyDer, fromBase64url(vapidPublicKey));
   const pem = `-----BEGIN EC PRIVATE KEY-----\n${ecPrivKeyDer

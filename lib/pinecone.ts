@@ -293,7 +293,7 @@ export async function getContext(
     }
 
     // Strip scores from production responses to keep the API surface clean
-    return filtered.map(({ score, ...metadata }) => metadata as ChunkMetadata);
+    return filtered.map(({ score: _score, ...metadata }) => metadata as ChunkMetadata);
   } catch (error) {
     console.error('Error retrieving context from Pinecone:', error);
     return [];

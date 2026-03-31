@@ -14,9 +14,9 @@ describe('bookmarks — content snapshot truncation', () => {
   });
 
   it('uses empty string when no preceding user message', () => {
-    const userMsg: null = null;
-    const question = userMsg?.content?.slice(0, 500) ?? '';
-    expect(question).toBe('');
+    const getQuestion = (msg: { content?: string } | null) =>
+      msg?.content?.slice(0, 500) ?? '';
+    expect(getQuestion(null)).toBe('');
   });
 
   it('preserves short content unchanged', () => {

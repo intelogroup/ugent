@@ -6,6 +6,33 @@ function getApiUrl(): string {
   return `https://graph.facebook.com/v19.0/${phoneId}/messages`;
 }
 
+export async function sendWhatsAppMessage(to: string, body: string): Promise<void> {
+  const token = process.env.WHATSAPP_TOKEN;
+  if (!token) {
+    console.warn('[whatsapp] WHATSAPP_TOKEN not set');
+    return;
+  }
+
+  const res = await fetch(getApiUrl(), {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      messaging_product: 'whatsapp',
+      to,
+      type: 'text',
+      text: { body },
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`[whatsapp] API error: ${JSON.stringify(err)}`);
+  }
+}
+
 function buildFactsText(facts: Fact[]): string {
   const date = new Date().toLocaleDateString('en-US', {
     weekday: 'long',

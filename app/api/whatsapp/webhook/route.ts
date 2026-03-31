@@ -7,6 +7,7 @@
 
 import { createHmac, timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
+import { sendWhatsAppMessage } from '@/lib/whatsapp';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -64,8 +65,19 @@ export async function POST(req: Request) {
 
   if (message) {
     const from: string = message.from; // international format, no +
-    // Acknowledge receipt without logging PII (phone number)
-    void from; // consumed but not logged
+    
+    // Simple inbound greeting - redirect to web app (saves tokens on dev tier)
+    if (message.text?.body) {
+      const response = "Thanks for messaging UGent MedBot! 🩺\n\n" +
+        "Get AI answers at: https://ugent-phi.vercel.app\n" +
+        "Subscribe for daily facts via the web app!";
+      
+      try {
+        await sendWhatsAppMessage(from, response);
+      } catch (err) {
+        console.error('[whatsapp] Failed to send response:', err);
+      }
+    }
   }
 
   // Always return 200 — Meta retries on non-200

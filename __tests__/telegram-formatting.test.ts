@@ -3,18 +3,20 @@ import type { Fact } from '@/lib/facts-agent';
 
 const SAMPLE_FACTS: Fact[] = [
   {
+    id: 'fact-1',
     topic: 'MI',
     fact: 'Coagulative necrosis after 20 min ischemia.',
     source: 'Pathoma — Heart',
     category: 'Cardiology',
-    generatedAt: new Date('2026-01-01T12:00:00Z').getTime(),
+    generatedAt: new Date('2026-01-01T12:00:00Z').toISOString(),
   },
   {
+    id: 'fact-2',
     topic: 'SLE',
     fact: 'Anti-dsDNA is specific for SLE.',
     source: 'First Aid — Immunology',
     category: 'Immunology',
-    generatedAt: new Date('2026-01-01T12:00:00Z').getTime(),
+    generatedAt: new Date('2026-01-01T12:00:00Z').toISOString(),
   },
 ];
 

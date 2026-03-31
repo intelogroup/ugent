@@ -12,7 +12,7 @@ function useWorkOSAuth() {
   const { getAccessToken } = useAccessToken();
 
   const fetchAccessToken = useCallback(
-    async ({ forceRefreshToken }: { forceRefreshToken: boolean }) => {
+    async ({ forceRefreshToken: _forceRefreshToken }: { forceRefreshToken: boolean }) => {
       if (!user) return null;
       // getAccessToken() always returns a fresh token when needed
       const token = await getAccessToken();

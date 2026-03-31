@@ -1,9 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
 
-const mockPatch = vi.fn();
-const mockFirst = vi.fn();
-const mockWithIndex = vi.fn(() => ({ first: mockFirst }));
-const mockQuery = vi.fn(() => ({ withIndex: mockWithIndex }));
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockPatch = vi.fn() as any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockFirst = vi.fn() as any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockWithIndex = vi.fn(() => ({ first: mockFirst })) as any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockQuery = vi.fn(() => ({ withIndex: mockWithIndex })) as any;
 const mockGetUserIdentity = vi.fn();
 
 const mockCtx = {

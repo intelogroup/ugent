@@ -4,18 +4,20 @@ import type { Fact } from '@/lib/facts-agent';
 
 const SAMPLE_FACTS: Fact[] = [
   {
+    id: 'fact-1',
     topic: 'Nephrotic Syndrome',
     fact: 'Massive proteinuria greater than 3.5g/day.',
     source: 'First Aid — Renal',
     category: 'Nephrology',
-    generatedAt: new Date('2026-01-15T10:00:00Z').getTime(),
+    generatedAt: new Date('2026-01-15T10:00:00Z').toISOString(),
   },
   {
+    id: 'fact-2',
     topic: 'MI',
     fact: 'Coagulative necrosis after 20 min ischemia.',
     source: 'Pathoma — Heart',
     category: 'Cardiology',
-    generatedAt: new Date('2026-01-15T10:00:00Z').getTime(),
+    generatedAt: new Date('2026-01-15T10:00:00Z').toISOString(),
   },
 ];
 
@@ -56,11 +58,12 @@ describe('buildEmailHtml', () => {
 
   it('uses a fallback color #6b7280 for unknown categories', () => {
     const unknownFact: Fact = {
+      id: 'fact-3',
       topic: 'Foo',
       fact: 'Bar.',
       source: 'Baz',
       category: 'UnknownCategory',
-      generatedAt: Date.now(),
+      generatedAt: new Date().toISOString(),
     };
     const html = buildEmailHtml([unknownFact]);
     const occurrences = (html.match(/#6b7280/g) ?? []).length;

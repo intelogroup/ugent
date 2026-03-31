@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('@/lib/pinecone', () => ({
-  getContext: vi.fn().mockResolvedValue({ context: 'test context', topScore: 0.8 }),
+  getContext: vi.fn().mockResolvedValue([{ text: 'test context', score: 0.8, book: 'First Aid', chapter: 'Biochemistry' }]),
 }));
 
 vi.mock('@/lib/telegram', () => ({

@@ -42,7 +42,7 @@ const mockCurrentUser = { _id: "user-123", email: "test@example.com" };
 describe("Dashboard Bot Connect card", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useQuery).mockImplementation((key: string) => {
+    vi.mocked(useQuery).mockImplementation((...args: unknown[]) => { const key = args[0] as string;
       if (key === "users:getCurrentUser") return mockCurrentUser;
       if (key === "botOnboarding:getConnectionStatus")
         return { telegramConnected: false, telegramUsername: null, whatsappConnected: false };
@@ -64,7 +64,7 @@ describe("Dashboard Bot Connect card", () => {
   });
 
   it("shows connected username when linked", () => {
-    vi.mocked(useQuery).mockImplementation((key: string) => {
+    vi.mocked(useQuery).mockImplementation((...args: unknown[]) => { const key = args[0] as string;
       if (key === "users:getCurrentUser") return mockCurrentUser;
       if (key === "botOnboarding:getConnectionStatus")
         return { telegramConnected: true, telegramUsername: "myuser", whatsappConnected: false };

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { BotConnectModal } from "@/components/onboarding/bot-connect-modal";
 
@@ -46,7 +46,7 @@ describe("BotConnectModal", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useQuery).mockImplementation((key: string) => {
+    vi.mocked(useQuery).mockImplementation((...args: unknown[]) => { const key = args[0] as string;
       if (key === "users:getCurrentUser") return mockCurrentUser;
       return {
         telegramConnected: false,
@@ -82,7 +82,7 @@ describe("BotConnectModal", () => {
   });
 
   it("shows connected state when telegramConnected is true", () => {
-    vi.mocked(useQuery).mockImplementation((key: string) => {
+    vi.mocked(useQuery).mockImplementation((...args: unknown[]) => { const key = args[0] as string;
       if (key === "users:getCurrentUser") return mockCurrentUser;
       return {
         telegramConnected: true,
@@ -117,7 +117,7 @@ describe("BotConnectModal", () => {
   });
 
   it("shows Disconnect button when telegramConnected is true", () => {
-    vi.mocked(useQuery).mockImplementation((key: string) => {
+    vi.mocked(useQuery).mockImplementation((...args: unknown[]) => { const key = args[0] as string;
       if (key === "users:getCurrentUser") return mockCurrentUser;
       return { telegramConnected: true, telegramUsername: "testuser", whatsappConnected: false };
     });
@@ -127,7 +127,7 @@ describe("BotConnectModal", () => {
 
   it("calls disconnectTelegram mutation when Disconnect is clicked", async () => {
     mockDisconnect.mockResolvedValue(undefined);
-    vi.mocked(useQuery).mockImplementation((key: string) => {
+    vi.mocked(useQuery).mockImplementation((...args: unknown[]) => { const key = args[0] as string;
       if (key === "users:getCurrentUser") return mockCurrentUser;
       return { telegramConnected: true, telegramUsername: "testuser", whatsappConnected: false };
     });
